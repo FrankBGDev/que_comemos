@@ -131,7 +131,7 @@ Verifica que el servidor está activo.
 | Variable | Requerida | Descripción |
 |----------|-----------|-------------|
 | `GEMINI_API_KEY` | ✅ | API key de Google Gemini (gratuita en [aistudio.google.com/apikey](https://aistudio.google.com/apikey)) |
-| `GEMINI_MODEL` | ❌ | Modelo a usar (por defecto `gemini-2.5-flash`) |
+| `GEMINI_MODEL` | ❌ | Modelo a usar (por defecto `gemini-flash-lite-latest`; `gemini-2.5-flash` solo da 20 solicitudes/día gratis) |
 | `PORT` | ❌ | Puerto del servidor (por defecto `3001`) |
 | `NODE_ENV` | ❌ | `development` o `production` |
 | `ALLOWED_ORIGIN` | En producción | Orígenes CORS permitidos (separados por coma) |

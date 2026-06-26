@@ -83,7 +83,7 @@ Los pasos deben ser claros, en orden y con el tiempo_minutos en 0 si es un paso 
 }
 
 // ── GEMINI ───────────────────────────────────────────────────────────────────
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // Llama a Gemini con el prompt dado y devuelve el JSON ya parseado.
