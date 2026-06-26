@@ -21,8 +21,8 @@ const allowedOrigins =
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Permitir requests sin origin (ej. Postman, curl) solo en desarrollo
-      if (!origin && process.env.NODE_ENV !== "production") return callback(null, true);
+      // Sin header Origin (curl, health checks, server-to-server) no aplica CORS — siempre se permite.
+      if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
       callback(new Error(`Origen no permitido por CORS: ${origin}`));
     },
@@ -226,6 +226,12 @@ app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ error: "Ruta no encontrada." }));
+
+// ── ERRORES (ej. CORS) ────────────────────────────────────────────────────────
+app.use((err, _req, res, _next) => {
+  console.error(err.message);
+  res.status(403).json({ error: "Origen no permitido." });
+});
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
