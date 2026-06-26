@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check backend/src/index.js)",
+      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); console.log\\('KEY set:', !!process.env.ANTHROPIC_API_KEY, 'len:', \\(process.env.ANTHROPIC_API_KEY||''\\).length\\)\")",
+      "Bash(curl -s -X POST http://localhost:3001/api/sugerir-comida -H \"Content-Type: application/json\" -d '{\"tiempo\":\"desayuno\",\"contexto\":{\"personas\":\"2 personas\",\"tiempo\":\"20-40 min\",\"mercado\":\"Lo básico\"},\"historial\":[],\"dia\":\"Jueves\"}')"
+    ]
+  }
+}
