@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { supabase, supabaseConfigured } from "./supabaseClient";
 
 const TIEMPO_LABELS = {
   desayuno: { label: "Desayuno", emoji: "🌅", hora: "6:00 – 9:00 am", sub: "Para arrancar" },
@@ -632,6 +633,137 @@ function PerfilScreen({ perfil, onSave, onBack }) {
   );
 }
 
+// ── AUTENTICACIÓN ─────────────────────────────────────────────────────────────
+// Traduce los mensajes de error de Supabase Auth (vienen en inglés) a algo natural.
+function traducirErrorAuth(msg) {
+  const m = (msg || "").toLowerCase();
+  if (m.includes("invalid login credentials")) return "Correo o contraseña incorrectos.";
+  if (m.includes("already registered") || m.includes("already exists")) return "Ya existe una cuenta con este correo.";
+  if (m.includes("email not confirmed")) return "Debes confirmar tu correo antes de entrar — revisa tu bandeja de entrada.";
+  if (m.includes("password should be at least") || m.includes("at least 6 characters")) return "La contraseña debe tener al menos 6 caracteres.";
+  if (m.includes("rate limit")) return "Demasiados intentos. Espera un momento y vuelve a intentar.";
+  return msg || "Ocurrió un error. Intenta de nuevo.";
+}
+
+function AuthScreen() {
+  const [modo, setModo] = useState("login"); // "login" | "signup"
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setInfo("");
+    setLoading(true);
+    try {
+      if (modo === "login") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        setInfo("Cuenta creada. Si tu correo necesita confirmación, revísalo antes de entrar.");
+      }
+    } catch (err) {
+      setError(traducirErrorAuth(err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const recuperar = async () => {
+    if (!email) { setError("Escribe tu correo arriba primero."); return; }
+    setError("");
+    setInfo("");
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
+      setInfo("Te enviamos un correo para restablecer tu contraseña.");
+    } catch (err) {
+      setError(traducirErrorAuth(err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="auth-screen">
+      <div className="auth-screen__brand">
+        <h1 className="header__title">¿Qué comemos<br />hoy?</h1>
+        <p className="auth-screen__tag">Tu menú familiar, donde sea que entres.</p>
+      </div>
+
+      <form className="auth-card" onSubmit={submit}>
+        <h2 className="auth-card__title">{modo === "login" ? "Inicia sesión" : "Crea tu cuenta"}</h2>
+
+        <div className="config-item">
+          <label>Correo</label>
+          <input className="auth-input" type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tucorreo@ejemplo.com" />
+        </div>
+        <div className="config-item">
+          <label>Contraseña</label>
+          <input className="auth-input" type="password" required minLength={6} autoComplete={modo === "login" ? "current-password" : "new-password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" />
+        </div>
+
+        {error && <p className="auth-error">{error}</p>}
+        {info && <p className="auth-info">{info}</p>}
+
+        <button className="btn btn--primary" type="submit" disabled={loading}>
+          {loading ? "Un momento..." : modo === "login" ? "Entrar" : "Crear cuenta"}
+        </button>
+
+        <button type="button" className="auth-link" onClick={() => { setModo(modo === "login" ? "signup" : "login"); setError(""); setInfo(""); }}>
+          {modo === "login" ? "¿No tienes cuenta? Créala" : "¿Ya tienes cuenta? Inicia sesión"}
+        </button>
+        {modo === "login" && (
+          <button type="button" className="auth-link" onClick={recuperar} disabled={loading}>¿Olvidaste tu contraseña?</button>
+        )}
+      </form>
+    </div>
+  );
+}
+
+function RecoveryForm({ onDone }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      onDone();
+    } catch (err) {
+      setError(traducirErrorAuth(err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="auth-screen">
+      <form className="auth-card" onSubmit={submit}>
+        <h2 className="auth-card__title">Define tu nueva contraseña</h2>
+        <div className="config-item">
+          <label>Nueva contraseña</label>
+          <input className="auth-input" type="password" required minLength={6} autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} />
+        </div>
+        {error && <p className="auth-error">{error}</p>}
+        <button className="btn btn--primary" type="submit" disabled={loading}>
+          {loading ? "Guardando..." : "Guardar nueva contraseña"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 // ── APP PRINCIPAL ─────────────────────────────────────────────────────────────
 export default function BogotaMealPlanner() {
   const snap = typeof window !== "undefined" ? loadSnapshot() : null;
@@ -647,6 +779,9 @@ export default function BogotaMealPlanner() {
   const [loadingReceta, setLoadingReceta] = useState(false);
   const [perfil, setPerfil] = useState(typeof window !== "undefined" ? loadPerfil() : PERFIL_VACIO);
   const [vista, setVista] = useState("plan"); // "plan" | "perfil"
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(supabaseConfigured);
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   // Controla peticiones en curso por comida para descartar respuestas viejas.
   const reqRef = useRef({});
@@ -655,6 +790,74 @@ export default function BogotaMealPlanner() {
     const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
     setDia(dias[new Date().getDay()]);
   }, []);
+
+  // Sesión de Supabase: getSession() resuelve el estado inicial; onAuthStateChange
+  // cubre login/logout y también el evento PASSWORD_RECOVERY (link de "olvidé mi contraseña").
+  useEffect(() => {
+    if (!supabaseConfigured) return;
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthLoading(false);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
+      setSession(newSession);
+      setAuthLoading(false);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  // Al iniciar sesión, trae el perfil guardado en Supabase (si existe) y lo vuelve la
+  // fuente de verdad. Si no existe fila aún, deja el estado local tal cual — el efecto
+  // de sincronización de abajo la crea solo, migrando lo que ya hubiera en localStorage.
+  useEffect(() => {
+    if (!session) return;
+    supabase
+      .from("perfiles")
+      .select("*")
+      .eq("id", session.user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) { console.error("Error cargando perfil remoto:", error.message); return; }
+        if (data) {
+          setPerfil({
+            alergias: data.alergias || "",
+            composicion: data.composicion || "",
+            objetivo: data.objetivo || "",
+            noQuieren: data.no_quieren || "",
+            _completado: !!(data.alergias || data.composicion || data.objetivo || data.no_quieren),
+            _descartado: true,
+          });
+          if (data.contexto && Object.keys(data.contexto).length) setContexto(data.contexto);
+          if (Array.isArray(data.historial)) setHistorial(data.historial);
+        }
+      });
+  }, [session]);
+
+  // Sincroniza perfil/contexto/historial hacia Supabase en cada cambio (mientras haya
+  // sesión). Si la fila del usuario no existe todavía, upsert la crea — así se siembra
+  // sola con lo que ya hubiera en localStorage la primera vez que alguien inicia sesión.
+  useEffect(() => {
+    if (!session) return;
+    supabase
+      .from("perfiles")
+      .upsert({
+        id: session.user.id,
+        alergias: perfil.alergias,
+        composicion: perfil.composicion,
+        objetivo: perfil.objetivo,
+        no_quieren: perfil.noQuieren,
+        contexto,
+        historial,
+        updated_at: new Date().toISOString(),
+      })
+      .then(({ error }) => { if (error) console.error("Error guardando perfil remoto:", error.message); });
+  }, [session, perfil, contexto, historial]);
+
+  const cerrarSesion = async () => {
+    await supabase.auth.signOut();
+    setVista("plan");
+  };
 
   // Persiste el plan del día (incluye las recetas ya cargadas dentro de meals).
   useEffect(() => {
@@ -921,6 +1124,37 @@ export default function BogotaMealPlanner() {
         }
         .perfil-textarea:focus-visible { outline: 2px solid var(--terra); outline-offset: 1px; }
         .perfil-screen__actions { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+        .logout-link {
+          margin: 10px 16px 0; align-self: flex-start; border: none; background: none;
+          color: var(--cafe-soft); font-family: 'Nunito', sans-serif; font-weight: 700;
+          font-size: 11.5px; cursor: pointer; text-decoration: underline;
+        }
+
+        /* ───────── AUTENTICACIÓN ───────── */
+        .auth-screen {
+          min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+          justify-content: center; padding: 32px 22px; gap: 26px; text-align: center;
+        }
+        .auth-screen__brand .header__title { color: var(--terra-d); }
+        .auth-screen__tag { font-size: 13px; color: var(--cafe-soft); margin-top: 8px; }
+        .auth-card {
+          width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--line);
+          border-radius: 20px; padding: 22px; box-shadow: var(--sh-2); text-align: left;
+          display: flex; flex-direction: column; gap: 14px; animation: qch-up 0.4s ease both;
+        }
+        .auth-card__title { font-family: 'Playfair Display', serif; font-weight: 800; font-size: 21px; margin-bottom: 2px; }
+        .auth-input {
+          width: 100%; padding: 11px 13px; border-radius: var(--r-sm); border: 1.5px solid var(--line);
+          background: var(--surface); color: var(--cafe); font-family: 'Nunito', sans-serif; font-size: 13px;
+        }
+        .auth-input:focus-visible { outline: 2px solid var(--terra); outline-offset: 1px; }
+        .auth-error { font-size: 12.5px; font-weight: 700; color: var(--danger); }
+        .auth-info { font-size: 12.5px; font-weight: 700; color: var(--verde-d); }
+        .auth-link {
+          border: none; background: none; color: var(--terra); font-family: 'Nunito', sans-serif;
+          font-weight: 700; font-size: 12.5px; cursor: pointer; text-align: center; padding: 2px;
+        }
+        .auth-link:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* ───────── ACTIONS ───────── */
         .actions { padding: 16px 16px 4px; display: flex; flex-direction: column; gap: 10px; }
@@ -1090,7 +1324,13 @@ export default function BogotaMealPlanner() {
         @keyframes qch-fade { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
 
-      {vista === "perfil" ? (
+      {supabaseConfigured && authLoading ? (
+        <div className="auth-screen"><p className="auth-screen__tag">Cargando...</p></div>
+      ) : supabaseConfigured && recoveryMode ? (
+        <RecoveryForm onDone={() => setRecoveryMode(false)} />
+      ) : supabaseConfigured && !session ? (
+        <AuthScreen />
+      ) : vista === "perfil" ? (
         <PerfilScreen perfil={perfil} onSave={guardarPerfil} onBack={cerrarPerfil} />
       ) : (
       <>
@@ -1126,6 +1366,12 @@ export default function BogotaMealPlanner() {
             <button className="perfil-banner__close" onClick={() => setPerfil(p => ({ ...p, _descartado: true }))} aria-label="Descartar">✕</button>
           </div>
         </div>
+      )}
+
+      {supabaseConfigured && session && (
+        <button className="logout-link" onClick={cerrarSesion}>
+          Cerrar sesión ({session.user.email})
+        </button>
       )}
 
       {showConfig && (
