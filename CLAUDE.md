@@ -22,6 +22,7 @@ Single-component React app. All logic, state, and styles live in `src/App.jsx`. 
 **Component tree:**
 ```
 BogotaMealPlanner  ← root, owns all state
+├── PerfilScreen   ← full-screen view, replaces the planner when vista === "perfil"
 ├── MealCard       ← rendered 3×: desayuno, almuerzo, cena
 │   └── MealCardSkeleton  ← shown while loading before first result
 └── RecipeModal    ← bottom sheet, lazy-loads full recipe on demand
@@ -39,9 +40,12 @@ showConfig:    bool
 dia:           string                         // Spanish day name, set on mount
 historial:     { nombre, tiempo, fecha, saludable }[]  // last 21 meals (~7 days), sent to backend to avoid repeats and balance nutrition
 modalTiempo:   string | null                  // which meal's recipe modal is open
+perfil:        { alergias, composicion, objetivo, noQuieren, _completado, _descartado }  // filled once, not per-day like contexto — see "Family profile" below
+vista:         "plan" | "perfil"              // which full-screen view is showing
 ```
 
 **Data flow:**
+0. On first visit (`!perfil._completado && !perfil._descartado`), a dismissible `.perfil-banner` offers to fill in the family profile via `PerfilScreen`; afterward it collapses into a `.perfil-link` button that's always available to edit it again.
 1. User picks `contexto` options → clicks "Planear todo el día"
 2. `generateAll()` calls `generateMeal(tiempo)` for all three meals in parallel via `Promise.all`
 3. `generateMeal()` sends `{ tiempo, contexto, historial, dia }` → `fetch` to the backend proxy (`${VITE_API_URL}/api/sugerir-comida`), which builds the prompt and calls Gemini
@@ -53,6 +57,8 @@ modalTiempo:   string | null                  // which meal's recipe modal is op
 **Dietary filter (`contexto.dieta`):** Each dish in `CATALOGO` carries a `dieta: string[]` tag from `{"vegetariano", "vegano", "sinGluten", "sinLacteos"}` (vegan dishes are tagged with both `vegetariano` and `vegano`). `cumpleDieta(plato, dietaLabel)` checks a dish against the selected label via the `DIETA_TAGS` map; `"De todo"` or an unrecognized label always passes. `pickFromCatalogo()` filters by this before picking, falling back to the full unfiltered list only if no dish in that meal slot matches (shouldn't happen given current catalog coverage — kept as a safety net, never silently ignore a real dietary restriction without checking coverage first). On the backend, `buildPrompt()` looks up `contexto.dieta` in `DIETA_INSTRUCCIONES` (in `backend/src/index.js`) and appends an explicit restriction line to the Gemini prompt; the same labels must stay in sync between both files.
 
 **Regional cuisine (`contexto.region`):** `CATALOGO` is keyed by region first, then by `tiempo` — `CATALOGO[region][tiempo]`, e.g. `CATALOGO["Antioquia"].almuerzo`. `REGIONES` (the array of selectable region names) and `pickFromCatalogo()` both live in `App.jsx`; an unknown region falls back to `"Bogotá"`. Every region × meal × diet combination must have at least one matching dish — there's no further fallback once region+diet filtering empties the list, so check coverage before trimming or re-tagging dishes (verified empirically when this was built; re-verify with a throwaway script if the catalog changes). On the backend, `buildContextPrompt(region)` (in `backend/src/index.js`) looks up the region in its own `REGIONES` map (place names + típicos) and generates the system prompt dynamically instead of a single hardcoded Bogotá-only `CONTEXT_PROMPT` — the region keys in both files' `REGIONES` must stay in sync. `region` is also forwarded to `/api/receta-completa` so the full recipe prompt matches the region the dish was suggested for.
+
+**Family profile (`perfil`):** unlike `contexto` (re-picked daily), `perfil` is filled once on its own full-screen view (`PerfilScreen`, shown when `vista === "perfil"`) and persists indefinitely under `localStorage["qch:perfil"]`. It captures allergies/ingredients-to-avoid (free text), household composition (niños pequeños / adultos mayores / ambos / ninguno), the family's main goal (comer más sano / ahorrar al máximo / variar y no aburrirse / un poco de todo), and dishes they never want to see again (free text). `_completado`/`_descartado` track whether the user has saved it or explicitly dismissed the one-time banner that suggests filling it in — both collapse the banner into a small persistent `.perfil-link` button so it's always reachable later. `perfil` is sent alongside `contexto`/`historial`/`dia` in both `/api/sugerir-comida` and `/api/receta-completa` requests; the backend's `buildPerfilTexto()` (in `backend/src/index.js`) treats allergies as a hard constraint and the rest as a nudge. On the frontend fallback path, `chocaConPerfil()` excludes any catalog dish whose name/ingredients text-match an allergy or disliked term (normalized, accent-insensitive, terms ≥3 chars) — and unlike the diet filter, it does **not** re-include matching dishes if the exclusion empties the list, since allergies are a safety concern rather than a preference.
 
 **Stale-request cancellation:** `generateMeal` uses `reqRef` (a `useRef`) with `AbortController` + a sequence number per meal slot. Each new call aborts the previous in-flight request for that slot and ignores responses that arrive after a newer call was made. Do not remove this pattern when modifying `generateMeal`.
 

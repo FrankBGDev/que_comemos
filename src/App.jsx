@@ -190,10 +190,33 @@ const CATALOGO = {
   },
 };
 
-// Elige un plato del catálogo local de la región que cumpla la dieta, evitando los del historial reciente.
-function pickFromCatalogo(tiempo, historial = [], dieta = "De todo", region = "Bogotá") {
+// Normaliza texto para comparar sin tildes ni mayúsculas.
+function normalizar(txt) {
+  return (txt || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// Convierte "camarones, frutos secos" en ["camarones", "frutos secos"].
+function listaDeTexto(txt) {
+  return normalizar(txt).split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+}
+
+// true si el plato menciona (en nombre o ingredientes) alguna alergia o algo que la familia
+// no quiere ver, según el perfil familiar. Términos muy cortos (<3 letras) se ignoran para
+// evitar falsos positivos accidentales.
+function chocaConPerfil(plato, perfil) {
+  const terminos = [...listaDeTexto(perfil?.alergias), ...listaDeTexto(perfil?.noQuieren)].filter(t => t.length >= 3);
+  if (!terminos.length) return false;
+  const texto = normalizar(`${plato.nombre} ${plato.ingredientes.join(" ")}`);
+  return terminos.some(t => texto.includes(t));
+}
+
+// Elige un plato del catálogo local de la región que cumpla la dieta y el perfil familiar,
+// evitando los del historial reciente.
+function pickFromCatalogo(tiempo, historial = [], dieta = "De todo", region = "Bogotá", perfil = null) {
   const platosRegion = CATALOGO[region] || CATALOGO["Bogotá"];
-  const todos = platosRegion[tiempo] || [];
+  // Las alergias/platos no deseados se excluyen primero y sin reintroducirlos como respaldo:
+  // a diferencia de la dieta (preferencia), esto puede ser un tema de seguridad.
+  const todos = (platosRegion[tiempo] || []).filter(d => !chocaConPerfil(d, perfil));
   const aptos = todos.filter(d => cumpleDieta(d, dieta));
   const lista = aptos.length ? aptos : todos;
   if (!lista.length) return null;
@@ -234,6 +257,21 @@ function loadHistorial() {
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     return [];
+  }
+}
+
+// El perfil familiar se llena una sola vez (no se repite cada día como región/dieta) y
+// persiste indefinidamente. `_completado`/`_descartado` controlan si se le sigue mostrando
+// el aviso para completarlo o si ya pasó por la pantalla (guardó o la cerró sin guardar).
+const PERFIL_KEY = "qch:perfil";
+const PERFIL_VACIO = { alergias: "", composicion: "", objetivo: "", noQuieren: "", _completado: false, _descartado: false };
+
+function loadPerfil() {
+  try {
+    const raw = localStorage.getItem(PERFIL_KEY);
+    return raw ? { ...PERFIL_VACIO, ...JSON.parse(raw) } : PERFIL_VACIO;
+  } catch (e) {
+    return PERFIL_VACIO;
   }
 }
 
@@ -519,6 +557,81 @@ function MealCard({ tiempo, meal, loading, onGenerate, contexto, onVerReceta }) 
   );
 }
 
+// ── PANTALLA DE PERFIL FAMILIAR ───────────────────────────────────────────────
+const PERFIL_COMPOSICION = ["Niños pequeños", "Adultos mayores", "Ambos", "Ninguno"];
+const PERFIL_OBJETIVOS = ["Comer más sano", "Ahorrar al máximo", "Variar y no aburrirse", "Un poco de todo"];
+
+function PerfilScreen({ perfil, onSave, onBack }) {
+  const [form, setForm] = useState(perfil);
+
+  return (
+    <div className="perfil-screen">
+      <div className="perfil-screen__header">
+        <button className="perfil-screen__back" onClick={onBack}>← Volver</button>
+        <h2 className="perfil-screen__title">Perfil familiar</h2>
+        <p className="perfil-screen__hint">Esto se guarda una sola vez — lo usamos para afinar cada sugerencia.</p>
+      </div>
+
+      <div className="perfil-screen__body">
+        <div className="config-item">
+          <label>¿Alguien en casa tiene alergias o debe evitar algún ingrediente por completo?</label>
+          <textarea
+            className="perfil-textarea"
+            placeholder="Ej: camarones, frutos secos..."
+            value={form.alergias}
+            onChange={e => setForm(f => ({ ...f, alergias: e.target.value }))}
+          />
+        </div>
+
+        <div className="config-item">
+          <label>¿Hay niños pequeños o adultos mayores en casa?</label>
+          <div className="config-options">
+            {PERFIL_COMPOSICION.map(opt => (
+              <button
+                key={opt}
+                className={`config-btn ${form.composicion === opt ? "config-btn--active" : ""}`}
+                onClick={() => setForm(f => ({ ...f, composicion: opt }))}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="config-item">
+          <label>¿Cuál es el objetivo principal de la familia con la comida?</label>
+          <div className="config-options">
+            {PERFIL_OBJETIVOS.map(opt => (
+              <button
+                key={opt}
+                className={`config-btn ${form.objetivo === opt ? "config-btn--active" : ""}`}
+                onClick={() => setForm(f => ({ ...f, objetivo: opt }))}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="config-item">
+          <label>¿Hay algún plato o ingrediente que definitivamente no quieren volver a ver?</label>
+          <textarea
+            className="perfil-textarea"
+            placeholder="Ej: hígado, berenjena..."
+            value={form.noQuieren}
+            onChange={e => setForm(f => ({ ...f, noQuieren: e.target.value }))}
+          />
+        </div>
+      </div>
+
+      <div className="perfil-screen__actions">
+        <button className="btn btn--primary" onClick={() => onSave(form)}>Guardar perfil</button>
+        <button className="btn btn--secondary" onClick={onBack}>Volver sin guardar</button>
+      </div>
+    </div>
+  );
+}
+
 // ── APP PRINCIPAL ─────────────────────────────────────────────────────────────
 export default function BogotaMealPlanner() {
   const snap = typeof window !== "undefined" ? loadSnapshot() : null;
@@ -532,6 +645,8 @@ export default function BogotaMealPlanner() {
   const [historial, setHistorial] = useState(typeof window !== "undefined" ? loadHistorial() : []);
   const [modalTiempo, setModalTiempo] = useState(null);
   const [loadingReceta, setLoadingReceta] = useState(false);
+  const [perfil, setPerfil] = useState(typeof window !== "undefined" ? loadPerfil() : PERFIL_VACIO);
+  const [vista, setVista] = useState("plan"); // "plan" | "perfil"
 
   // Controla peticiones en curso por comida para descartar respuestas viejas.
   const reqRef = useRef({});
@@ -555,6 +670,24 @@ export default function BogotaMealPlanner() {
     } catch (e) { /* almacenamiento no disponible */ }
   }, [historial]);
 
+  // Persiste el perfil familiar aparte: no depende del día ni se reinicia nunca.
+  useEffect(() => {
+    try {
+      localStorage.setItem(PERFIL_KEY, JSON.stringify(perfil));
+    } catch (e) { /* almacenamiento no disponible */ }
+  }, [perfil]);
+
+  const guardarPerfil = (form) => {
+    setPerfil({ ...form, _completado: true, _descartado: false });
+    setVista("plan");
+  };
+
+  // Si nunca lo había completado, cerrarlo cuenta como "ya tuvo la oportunidad" — no insiste con el aviso.
+  const cerrarPerfil = () => {
+    setPerfil(p => (p._completado ? p : { ...p, _descartado: true }));
+    setVista("plan");
+  };
+
   const generateMeal = async (tiempo, ctx) => {
     // Cancela cualquier petición anterior de esta comida y marca esta como la vigente.
     if (reqRef.current[tiempo]?.ctrl) reqRef.current[tiempo].ctrl.abort();
@@ -569,7 +702,7 @@ export default function BogotaMealPlanner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: ctrl.signal,
-        body: JSON.stringify({ tiempo, contexto: ctx, historial, dia }),
+        body: JSON.stringify({ tiempo, contexto: ctx, historial, dia, perfil }),
       });
       const parsed = await response.json();
       if (!response.ok || !parsed?.nombre) throw new Error(parsed?.error || "Respuesta del servidor no válida");
@@ -593,7 +726,7 @@ export default function BogotaMealPlanner() {
       if (err.name === "AbortError" || !esVigente()) return; // cancelada o reemplazada
       // Fallback elegante: usa el catálogo local y ofrece reintentar.
       console.error("Generación falló, usando catálogo local:", err);
-      const local = pickFromCatalogo(tiempo, historial, ctx?.dieta, ctx?.region);
+      const local = pickFromCatalogo(tiempo, historial, ctx?.dieta, ctx?.region, perfil);
       if (local) {
         setMeals(prev => ({ ...prev, [tiempo]: { ...local, fallback: true } }));
         setHistorial(prev => [
@@ -614,7 +747,7 @@ export default function BogotaMealPlanner() {
       const response = await fetch(`${API_URL}/api/receta-completa`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre: meal.nombre, personas: contexto.personas, region: contexto.region }),
+        body: JSON.stringify({ nombre: meal.nombre, personas: contexto.personas, region: contexto.region, perfil }),
       });
       const receta = await response.json();
       if (!response.ok) throw new Error(receta?.error || "No se pudo cargar la receta");
@@ -756,6 +889,38 @@ export default function BogotaMealPlanner() {
         .config-btn:focus-visible { outline: 2px solid var(--terra); outline-offset: 1px; }
         .config-btn--active, .config-btn--active:hover { background: var(--terra); border-color: var(--terra); color: #fff; box-shadow: 0 3px 9px rgba(194,91,40,0.28); }
         .config-btn--active::before { content: '✓'; font-size: 11px; line-height: 1; }
+
+        /* ───────── PERFIL FAMILIAR ───────── */
+        .perfil-banner {
+          margin: 14px 16px 0; padding: 13px 14px; border-radius: 16px;
+          background: var(--acc-cen-soft); border: 1px solid rgba(62,92,118,0.18);
+          display: flex; align-items: flex-start; gap: 10px; animation: qch-up 0.4s ease both;
+        }
+        .perfil-banner__icon { font-size: 19px; line-height: 1; flex-shrink: 0; }
+        .perfil-banner__text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .perfil-banner__text strong { font-size: 13px; }
+        .perfil-banner__text span { font-size: 12px; color: var(--cafe-soft); line-height: 1.4; }
+        .perfil-banner__actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+        .perfil-banner__btn { padding: 7px 12px; border: none; border-radius: 9px; background: var(--noche); color: #fff; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 11.5px; cursor: pointer; }
+        .perfil-banner__close { width: 22px; height: 22px; border: none; background: none; color: var(--cafe-soft); font-size: 13px; cursor: pointer; line-height: 1; }
+        .perfil-link {
+          margin: 14px 16px 0; padding: 10px 14px; border-radius: 13px; align-self: flex-start;
+          border: 1.5px solid var(--line); background: var(--surface); color: var(--cafe-soft);
+          font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 12.5px; cursor: pointer;
+        }
+
+        .perfil-screen { padding: 18px 16px 28px; animation: qch-up 0.35s ease both; }
+        .perfil-screen__back { border: none; background: none; color: var(--terra); font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 14px; }
+        .perfil-screen__title { font-family: 'Playfair Display', serif; font-weight: 800; font-size: 24px; margin-bottom: 6px; }
+        .perfil-screen__hint { font-size: 12.5px; color: var(--cafe-soft); margin-bottom: 20px; }
+        .perfil-screen__body .config-item { margin-bottom: 20px; }
+        .perfil-textarea {
+          width: 100%; min-height: 64px; padding: 11px 13px; border-radius: var(--r-sm);
+          border: 1.5px solid var(--line); background: var(--surface); color: var(--cafe);
+          font-family: 'Nunito', sans-serif; font-size: 13px; resize: vertical;
+        }
+        .perfil-textarea:focus-visible { outline: 2px solid var(--terra); outline-offset: 1px; }
+        .perfil-screen__actions { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 
         /* ───────── ACTIONS ───────── */
         .actions { padding: 16px 16px 4px; display: flex; flex-direction: column; gap: 10px; }
@@ -925,6 +1090,10 @@ export default function BogotaMealPlanner() {
         @keyframes qch-fade { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
 
+      {vista === "perfil" ? (
+        <PerfilScreen perfil={perfil} onSave={guardarPerfil} onBack={cerrarPerfil} />
+      ) : (
+      <>
       <div className="header">
         <div className="header__row">
           <div>
@@ -940,6 +1109,24 @@ export default function BogotaMealPlanner() {
         </div>
         <p className="header__sub">Menú del día pensado para tu familia — fresco, rendidor y con sabor de casa.</p>
       </div>
+
+      {perfil._completado || perfil._descartado ? (
+        <button className="perfil-link" onClick={() => setVista("perfil")}>
+          👤 {perfil._completado ? "Editar perfil familiar" : "Completar perfil familiar"}
+        </button>
+      ) : (
+        <div className="perfil-banner">
+          <span className="perfil-banner__icon">📋</span>
+          <div className="perfil-banner__text">
+            <strong>Completa el perfil de tu familia</strong>
+            <span>Alergias, niños en casa y tus prioridades — para sugerencias más precisas.</span>
+          </div>
+          <div className="perfil-banner__actions">
+            <button className="perfil-banner__btn" onClick={() => setVista("perfil")}>Completar</button>
+            <button className="perfil-banner__close" onClick={() => setPerfil(p => ({ ...p, _descartado: true }))} aria-label="Descartar">✕</button>
+          </div>
+        </div>
+      )}
 
       {showConfig && (
         <div className="config-panel">
@@ -1006,6 +1193,8 @@ export default function BogotaMealPlanner() {
           onLoadReceta={() => loadReceta(modalTiempo)}
           loadingReceta={loadingReceta}
         />
+      )}
+      </>
       )}
     </div>
   );

@@ -71,10 +71,14 @@ Cuando sea posible sin perder el sabor local, inclina tus sugerencias hacia prin
 porciones moderadas, proteínas variadas y menos fritos o ultraprocesados — sin dejar de ser comida típica de la región.`;
 }
 
-function buildRecetaPrompt({ nombre, personas, region }) {
+function buildRecetaPrompt({ nombre, personas, region, perfil }) {
+  const alergiaTexto = perfil?.alergias?.trim()
+    ? `\nRESTRICCIÓN DE SALUD (obligatoria): evita por completo estos ingredientes en la receta y en cualquier variación que sugieras: ${perfil.alergias.trim()}.`
+    : "";
+
   return `${buildContextPrompt(region)}
 
-Genera la receta COMPLETA y detallada de "${nombre}" para ${personas}.
+Genera la receta COMPLETA y detallada de "${nombre}" para ${personas}.${alergiaTexto}
 Responde ÚNICAMENTE con un JSON válido (sin texto extra, sin markdown) con esta estructura exacta:
 {
   "tiempo_total": 30,
@@ -142,7 +146,36 @@ const DIETA_INSTRUCCIONES = {
   "Sin lácteos": "\nAlguien en la familia no puede comer lácteos: evita leche, queso, crema, mantequilla y derivados.",
 };
 
-function buildPrompt({ tiempo, contexto, historial = [], dia = "" }) {
+// Instrucción extra según el perfil familiar (se llena una sola vez, ver PerfilScreen en
+// src/App.jsx). Las alergias son la única restricción dura aquí; lo demás es un matiz.
+const PERFIL_OBJETIVO_INSTRUCCIONES = {
+  "Comer más sano": "\nLa prioridad principal de la familia es comer más sano: refuerza aún más las sugerencias balanceadas y con más vegetales.",
+  "Ahorrar al máximo": "\nLa prioridad principal de la familia es ahorrar: prioriza ingredientes económicos y fáciles de conseguir por encima de cualquier otra consideración.",
+  "Variar y no aburrirse": "\nLa prioridad principal de la familia es variar: evita con más fuerza repetir platos o estilos similares a los recientes.",
+};
+
+function buildPerfilTexto(perfil) {
+  if (!perfil) return "";
+  let texto = "";
+
+  if (perfil.alergias?.trim()) {
+    texto += `\nRESTRICCIÓN DE SALUD (obligatoria): la familia tiene alergias o debe evitar por completo estos ingredientes: ${perfil.alergias.trim()}. Nunca sugieras un plato que los contenga, bajo ninguna circunstancia.`;
+  }
+  if (perfil.composicion === "Niños pequeños" || perfil.composicion === "Ambos") {
+    texto += "\nHay niños pequeños en casa: evita platos muy picantes o con huesos/espinas, prefiere texturas fáciles de comer.";
+  }
+  if (perfil.composicion === "Adultos mayores" || perfil.composicion === "Ambos") {
+    texto += "\nHay adultos mayores en casa: prefiere preparaciones blandas y fáciles de digerir, sin exceso de picante ni fritos pesados.";
+  }
+  texto += PERFIL_OBJETIVO_INSTRUCCIONES[perfil.objetivo] || "";
+  if (perfil.noQuieren?.trim()) {
+    texto += `\nLa familia no quiere volver a ver estos platos o ingredientes, evítalos: ${perfil.noQuieren.trim()}.`;
+  }
+
+  return texto;
+}
+
+function buildPrompt({ tiempo, contexto, historial = [], dia = "", perfil = null }) {
   const nombresRecientes = historial.map((h) => h.nombre).filter(Boolean);
   const historialTexto =
     nombresRecientes.length > 0
@@ -158,6 +191,7 @@ function buildPrompt({ tiempo, contexto, historial = [], dia = "" }) {
       : "";
 
   const dietaTexto = DIETA_INSTRUCCIONES[contexto.dieta] || "";
+  const perfilTexto = buildPerfilTexto(perfil);
 
   const diaTexto = dia ? ` para hoy ${dia}` : "";
 
@@ -167,7 +201,7 @@ Contexto familiar:
 - Personas en casa: ${contexto.personas}
 - Tiempo disponible: ${contexto.tiempo}
 - Estado de la nevera: ${contexto.mercado}
-${historialTexto}${balanceTexto}${dietaTexto}
+${historialTexto}${balanceTexto}${dietaTexto}${perfilTexto}
 
 Sugiere UNA opción de ${tiempo}${diaTexto}.
 Responde ÚNICAMENTE con un JSON válido (sin texto extra, sin markdown) con esta estructura exacta:
@@ -184,7 +218,7 @@ Responde ÚNICAMENTE con un JSON válido (sin texto extra, sin markdown) con est
 
 // ── ENDPOINT ─────────────────────────────────────────────────────────────────
 app.post("/api/sugerir-comida", async (req, res) => {
-  const { tiempo, contexto, historial, dia } = req.body;
+  const { tiempo, contexto, historial, dia, perfil } = req.body;
 
   if (!tiempo || !contexto) {
     return res.status(400).json({
@@ -207,7 +241,7 @@ app.post("/api/sugerir-comida", async (req, res) => {
   }
 
   try {
-    const comida = await callGemini(buildPrompt({ tiempo, contexto, historial, dia }), 1000);
+    const comida = await callGemini(buildPrompt({ tiempo, contexto, historial, dia, perfil }), 1000);
     return res.json(comida);
   } catch (err) {
     console.error("Error al procesar la sugerencia:", err.message);
@@ -225,7 +259,7 @@ app.post("/api/sugerir-comida", async (req, res) => {
 });
 
 app.post("/api/receta-completa", async (req, res) => {
-  const { nombre, personas, region } = req.body;
+  const { nombre, personas, region, perfil } = req.body;
 
   if (!nombre || !personas) {
     return res.status(400).json({
@@ -241,7 +275,7 @@ app.post("/api/receta-completa", async (req, res) => {
   }
 
   try {
-    const receta = await callGemini(buildRecetaPrompt({ nombre, personas, region }), 2000);
+    const receta = await callGemini(buildRecetaPrompt({ nombre, personas, region, perfil }), 2000);
     return res.json(receta);
   } catch (err) {
     console.error("Error al procesar la receta:", err.message);
