@@ -8,10 +8,13 @@ const TIEMPO_LABELS = {
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
+const REGIONES = ["Bogotá", "Tolima", "Antioquia", "Costa Atlántica", "Costa Pacífica", "Santander", "Eje Cafetero"];
+
 const PREGUNTAS_CONTEXTO = [
   { id: "personas", label: "¿Cuántas personas en casa?", options: ["Solo", "2 personas", "3-4 personas", "5 o más"] },
   { id: "tiempo", label: "¿Cuánto tiempo tienes para cocinar?", options: ["Menos de 20 min", "20-40 min", "Más de 40 min"] },
   { id: "mercado", label: "¿Qué tan surtida está la nevera?", options: ["Casi vacía", "Lo básico", "Bien surtida"] },
+  { id: "region", label: "¿De qué región es tu sazón?", options: REGIONES },
   { id: "dieta", label: "¿Alguna restricción alimentaria?", options: ["De todo", "Vegetariano", "Vegano", "Sin gluten", "Sin lácteos"] },
 ];
 
@@ -31,9 +34,11 @@ function cumpleDieta(plato, dietaLabel) {
 }
 
 // ── CATÁLOGO LOCAL ────────────────────────────────────────────────────────────
-// Respaldo curado de cocina bogotana/colombiana. Se usa cuando la API falla o no
-// hay internet, para que el usuario nunca se quede sin sugerencia.
+// Respaldo curado por región, usado cuando la API falla o no hay internet para
+// que el usuario nunca se quede sin sugerencia. Cada región tiene su propio set
+// de platos típicos; "Bogotá" es la región por defecto y la más completa.
 const CATALOGO = {
+  "Bogotá": {
   desayuno: [
     { nombre: "Huevos pericos con arepa", descripcion: "Huevos revueltos con cebolla larga y tomate, con arepa asada y queso campesino.", ingredientes: ["Huevos", "Cebolla larga", "Tomate", "Arepa", "Queso"], saludable: true, economico: true, rapido: true, tip: "Cocina el tomate y la cebolla antes de echar el huevo.", dieta: ["vegetariano", "sinGluten"] },
     { nombre: "Calentado bogotano", descripcion: "Arroz, frijoles y carne salteados, con arepa y huevo frito encima.", ingredientes: ["Arroz", "Frijoles", "Carne", "Arepa", "Huevo"], saludable: false, economico: true, rapido: true, tip: "Aprovecha las sobras de la noche anterior.", dieta: ["sinGluten", "sinLacteos"] },
@@ -74,12 +79,123 @@ const CATALOGO = {
     { nombre: "Sopa de lentejas con verduras", descripcion: "Sopa de lentejas con zanahoria, papa, cebolla y cilantro.", ingredientes: ["Lentejas", "Zanahoria", "Papa", "Cilantro", "Cebolla"], saludable: true, economico: true, rapido: false, tip: "Licúa una parte de la sopa para que quede más espesa.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
     { nombre: "Patacones con guacamole", descripcion: "Patacones crocantes acompañados de guacamole fresco con limón.", ingredientes: ["Plátano verde", "Aguacate", "Tomate", "Cebolla", "Limón"], saludable: true, economico: true, rapido: true, tip: "Machaca el aguacate justo antes de servir para que no se oxide.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
   ],
+  }, // fin Bogotá
+
+  "Tolima": {
+    desayuno: [
+      { nombre: "Tamal tolimense con chocolate", descripcion: "Tamal de masa de maíz con pollo, cerdo y verduras, envuelto en hoja de plátano.", ingredientes: ["Masa de maíz", "Pollo", "Cerdo", "Arveja", "Hoja de plátano"], saludable: false, economico: false, rapido: false, tip: "Caliéntalo al vapor 20 min para que quede jugoso.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Envuelto de mazorca con queso", descripcion: "Bollo de mazorca tierna rellena de queso, envuelto en hoja y cocido al vapor.", ingredientes: ["Mazorca", "Queso", "Mantequilla", "Sal", "Hoja de plátano"], saludable: true, economico: true, rapido: false, tip: "No abras el envuelto hasta que se enfríe un poco, así no se desarma.", dieta: ["vegetariano", "sinGluten"] },
+      { nombre: "Arepa tolimense con aguacate", descripcion: "Arepa tolimense asada con aguacate machacado y tomate fresco.", ingredientes: ["Arepa tolimense", "Aguacate", "Tomate", "Sal", "Limón"], saludable: true, economico: true, rapido: true, tip: "Exprime el limón justo antes de servir para que el aguacate no se oxide.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+    almuerzo: [
+      { nombre: "Lechona tolimense", descripcion: "Cerdo horneado relleno de arroz, arveja y especias, plato insignia del Tolima.", ingredientes: ["Cerdo", "Arroz", "Arveja", "Papa", "Especias"], saludable: false, economico: false, rapido: false, tip: "Acompáñala con insulso (arepa de maíz pelado) como se hace tradicionalmente.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Viudo de pescado bocachico", descripcion: "Bocachico envuelto en hoja de plátano con yuca, papa y cilantro, cocido al vapor.", ingredientes: ["Bocachico", "Plátano", "Yuca", "Papa", "Cilantro"], saludable: true, economico: false, rapido: false, tip: "Sella bien la hoja de plátano para que no se escape el vapor.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Arroz tolimense con verduras y aguacate", descripcion: "Arroz salteado con zanahoria y arveja, servido con aguacate.", ingredientes: ["Arroz", "Zanahoria", "Arveja", "Aguacate", "Cebolla"], saludable: true, economico: true, rapido: true, tip: "Sofríe bien la cebolla antes de añadir el arroz para más sabor.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+    cena: [
+      { nombre: "Mondongo tolimense", descripcion: "Sopa espesa de mondongo con papa, yuca, zanahoria y cilantro.", ingredientes: ["Mondongo", "Papa", "Yuca", "Zanahoria", "Cilantro"], saludable: false, economico: true, rapido: false, tip: "Cocina el mondongo a fuego lento hasta que esté bien blando.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Changua con calado tolimense", descripcion: "Sopa de leche con huevo pochado, cebolla larga y cilantro, con calado.", ingredientes: ["Leche", "Huevos", "Cebolla larga", "Cilantro", "Calado"], saludable: true, economico: true, rapido: true, tip: "Apaga el fuego apenas cuaje el huevo.", dieta: ["vegetariano"] },
+      { nombre: "Arepa tolimense con aguacate y tomate", descripcion: "Arepa tolimense asada con aguacate machacado y tomate fresco.", ingredientes: ["Arepa tolimense", "Aguacate", "Tomate", "Sal", "Limón"], saludable: true, economico: true, rapido: true, tip: "Exprime el limón justo antes de servir para que el aguacate no se oxide.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+  },
+
+  "Antioquia": {
+    desayuno: [
+      { nombre: "Calentado paisa con chorizo", descripcion: "Arroz y frijoles del día anterior salteados con chorizo, arepa y huevo.", ingredientes: ["Arroz", "Frijoles", "Chorizo", "Arepa", "Huevo"], saludable: false, economico: true, rapido: true, tip: "Aprovecha las sobras de la noche anterior.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Arepa antioqueña con aguacate", descripcion: "Arepa blanca asada con aguacate machacado y tomate fresco.", ingredientes: ["Arepa antioqueña", "Aguacate", "Tomate", "Sal", "Limón"], saludable: true, economico: true, rapido: true, tip: "Exprime el limón justo antes de servir para que el aguacate no se oxide.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+      { nombre: "Mazamorra antioqueña con panela", descripcion: "Maíz cocido en leche con panela y canela, desayuno tradicional paisa.", ingredientes: ["Maíz", "Leche", "Panela", "Canela"], saludable: true, economico: true, rapido: false, tip: "Cocina el maíz el día anterior para que esté bien blando.", dieta: ["vegetariano", "sinGluten"] },
+    ],
+    almuerzo: [
+      { nombre: "Bandeja paisa", descripcion: "Frijoles, arroz, chicharrón, carne molida y huevo, el plato más representativo de Antioquia.", ingredientes: ["Frijol", "Arroz", "Chicharrón", "Carne molida", "Huevo"], saludable: false, economico: false, rapido: false, tip: "El chicharrón al final para que quede crocante.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Mondongo antioqueño", descripcion: "Sopa espesa de mondongo con papa, yuca, zanahoria y cilantro.", ingredientes: ["Mondongo", "Papa", "Yuca", "Zanahoria", "Cilantro"], saludable: false, economico: true, rapido: false, tip: "Cocina el mondongo a fuego lento hasta que esté bien blando.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Fríjoles antioqueños con arroz y aguacate", descripcion: "Fríjol cargamanto guisado con verduras, sin carne, con arroz y aguacate.", ingredientes: ["Frijol cargamanto", "Arroz", "Plátano", "Aguacate", "Zanahoria"], saludable: true, economico: true, rapido: false, tip: "Un sofrito de cebolla y zanahoria le da sabor sin necesidad de carne.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+    cena: [
+      { nombre: "Arepa paisa con frijoles", descripcion: "Arepa antioqueña acompañada de frijoles, queso y aguacate.", ingredientes: ["Arepa antioqueña", "Frijol", "Queso", "Cebolla", "Aguacate"], saludable: true, economico: true, rapido: true, tip: "Calienta los frijoles del almuerzo para no empezar de cero.", dieta: ["vegetariano", "sinGluten"] },
+      { nombre: "Sancocho de gallina antioqueño", descripcion: "Sancocho con presa de gallina, yuca, plátano, papa y cilantro.", ingredientes: ["Gallina", "Yuca", "Plátano", "Papa", "Cilantro"], saludable: true, economico: false, rapido: false, tip: "Cocina la gallina a fuego lento para un caldo con cuerpo.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Patacón con guacamole", descripcion: "Patacón crocante acompañado de guacamole fresco con limón.", ingredientes: ["Plátano verde", "Aguacate", "Tomate", "Cebolla", "Limón"], saludable: true, economico: true, rapido: true, tip: "Machaca el aguacate justo antes de servir para que no se oxide.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+  },
+
+  "Costa Atlántica": {
+    desayuno: [
+      { nombre: "Arepa de huevo costeña", descripcion: "Arepa de maíz frita y rellena de huevo, clásico desayuno costeño.", ingredientes: ["Masa de maíz", "Huevos", "Aceite", "Sal", "Suero"], saludable: false, economico: true, rapido: true, tip: "Sella bien los bordes para que el huevo no se salga.", dieta: ["vegetariano", "sinGluten"] },
+      { nombre: "Mote de queso", descripcion: "Sopa cremosa de ñame con queso costeño, cebolla y cilantro.", ingredientes: ["Ñame", "Queso", "Leche", "Cebolla", "Cilantro"], saludable: true, economico: true, rapido: false, tip: "Machaca un poco el ñame contra la olla para que la sopa espese sola.", dieta: ["vegetariano", "sinGluten"] },
+      { nombre: "Carimañola con guiso de verduras", descripcion: "Buñuelo de yuca rellena de un guiso de tomate, cebolla y pimentón.", ingredientes: ["Yuca", "Tomate", "Cebolla", "Pimentón", "Aceite"], saludable: true, economico: true, rapido: false, tip: "Amasa la yuca caliente para que sea más fácil de moldear.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+    almuerzo: [
+      { nombre: "Sancocho de mariscos costeño", descripcion: "Sancocho con pescado y camarón, yuca, plátano y cilantro.", ingredientes: ["Pescado", "Camarón", "Yuca", "Plátano", "Cilantro"], saludable: true, economico: false, rapido: false, tip: "Agrega los mariscos al final para que no se pasen de cocción.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Arroz de lisa", descripcion: "Arroz cocido con pescado lisa ahumado, coco y cebolla.", ingredientes: ["Arroz", "Lisa", "Coco", "Cebolla", "Ajo"], saludable: false, economico: true, rapido: false, tip: "Desmenuza bien el pescado para que se reparta en todo el arroz.", dieta: ["sinGluten"] },
+      { nombre: "Arroz con coco y fríjol de cabecita negra", descripcion: "Arroz cocido en leche de coco con fríjol de cabecita negra, sin carne.", ingredientes: ["Arroz", "Coco", "Fríjol de cabecita negra", "Cebolla", "Ajo"], saludable: true, economico: true, rapido: false, tip: "Tuesta el coco rallado antes de exprimirlo para más sabor.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+    cena: [
+      { nombre: "Pescado frito con patacón", descripcion: "Pescado frito entero con patacón y limón.", ingredientes: ["Pescado", "Plátano verde", "Limón", "Ajo", "Aceite"], saludable: true, economico: false, rapido: false, tip: "Marina el pescado con limón y ajo unos minutos antes de freírlo.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Butifarra con bollo de yuca", descripcion: "Butifarra costeña a la parrilla acompañada de bollo de yuca.", ingredientes: ["Butifarra", "Yuca", "Cebolla", "Limón", "Hoja de plátano"], saludable: false, economico: true, rapido: false, tip: "Sirve la butifarra bien caliente, recién salida de la parrilla.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Patacones con guacamole costeño", descripcion: "Patacones crocantes acompañados de guacamole fresco con limón.", ingredientes: ["Plátano verde", "Aguacate", "Tomate", "Cebolla", "Limón"], saludable: true, economico: true, rapido: true, tip: "Machaca el aguacate justo antes de servir para que no se oxide.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+  },
+
+  "Costa Pacífica": {
+    desayuno: [
+      { nombre: "Arepa de chócolo con panela", descripcion: "Arepa dulce de maíz tierno endulzada con panela raspada.", ingredientes: ["Maíz tierno", "Panela", "Aceite", "Sal"], saludable: true, economico: true, rapido: true, tip: "No la cocines a fuego muy alto, se quema por fuera y queda cruda por dentro.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+      { nombre: "Empanada de camarón", descripcion: "Empanada de masa de maíz rellena de camarón guisado.", ingredientes: ["Masa de maíz", "Camarón", "Cebolla", "Aceite", "Sal"], saludable: false, economico: true, rapido: false, tip: "Pica el camarón pequeño para que se reparta bien en el relleno.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Pandeyuca con queso y jugo de borojó", descripcion: "Pandeyuca horneado con un vaso de jugo de borojó.", ingredientes: ["Yuca", "Queso", "Huevo", "Borojó", "Azúcar"], saludable: true, economico: true, rapido: false, tip: "El borojó es muy ácido y espeso, dilúyelo bien con agua o leche.", dieta: ["vegetariano", "sinGluten"] },
+    ],
+    almuerzo: [
+      { nombre: "Encocado de pescado", descripcion: "Pescado guisado en leche de coco con plátano y cilantro.", ingredientes: ["Pescado", "Leche de coco", "Plátano", "Cilantro", "Ajo"], saludable: true, economico: false, rapido: false, tip: "No dejes hervir mucho la leche de coco o se puede cortar.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Arroz con coco y camarón", descripcion: "Arroz cocido en leche de coco con camarón y cebolla.", ingredientes: ["Arroz", "Coco", "Camarón", "Cebolla", "Ajo"], saludable: false, economico: false, rapido: false, tip: "Tuesta el coco rallado antes de exprimirlo para más sabor.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Sopa de plátano con coco", descripcion: "Sopa cremosa de plátano en leche de coco, sin pescado.", ingredientes: ["Plátano", "Leche de coco", "Cebolla", "Ajo", "Cilantro"], saludable: true, economico: true, rapido: true, tip: "Licúa la mitad de la sopa para que quede más espesa.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+    cena: [
+      { nombre: "Ceviche de camarón pacífico", descripcion: "Camarón curado en limón con cebolla, tomate y cilantro.", ingredientes: ["Camarón", "Limón", "Cebolla", "Tomate", "Cilantro"], saludable: true, economico: false, rapido: true, tip: "Deja el camarón en el limón solo el tiempo justo para que no quede duro.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Tapao de pescado con plátano", descripcion: "Pescado cocido a fuego lento con plátano, yuca y cebolla.", ingredientes: ["Pescado", "Plátano", "Yuca", "Cebolla", "Cilantro"], saludable: true, economico: false, rapido: false, tip: "Tapa bien la olla para que el pescado se cocine en su propio vapor.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Patacones con encocado de verduras", descripcion: "Patacones acompañados de un guiso de zanahoria y cebolla en leche de coco.", ingredientes: ["Plátano verde", "Leche de coco", "Zanahoria", "Cebolla", "Cilantro"], saludable: true, economico: true, rapido: false, tip: "Fríe el plátano dos veces, aplastándolo en medio.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+  },
+
+  "Santander": {
+    desayuno: [
+      { nombre: "Arepa santandereana con queso", descripcion: "Arepa de maíz pelao asada y rellena de queso.", ingredientes: ["Arepa de maíz pelao", "Queso", "Mantequilla", "Sal"], saludable: false, economico: true, rapido: true, tip: "Ásala en sartén bien caliente para que quede crocante por fuera.", dieta: ["vegetariano", "sinGluten"] },
+      { nombre: "Mute santandereano", descripcion: "Sopa espesa de maíz, garbanzo, papa y carne, típica de Santander.", ingredientes: ["Maíz", "Garbanzo", "Papa", "Carne", "Cilantro"], saludable: true, economico: true, rapido: false, tip: "Remoja el maíz y el garbanzo la noche anterior para que se cocinen más rápido.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Arepa santandereana con aguacate", descripcion: "Arepa de maíz pelao con aguacate machacado y tomate fresco.", ingredientes: ["Arepa de maíz pelao", "Aguacate", "Tomate", "Sal"], saludable: true, economico: true, rapido: true, tip: "Ásala en sartén bien caliente para que quede crocante por fuera.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+    almuerzo: [
+      { nombre: "Cabro guisado santandereano", descripcion: "Carne de cabro guisada con papa, cebolla y tomate, servida con arroz.", ingredientes: ["Cabro", "Papa", "Cebolla", "Tomate", "Arroz"], saludable: false, economico: false, rapido: false, tip: "Marina la carne de cabro desde la noche anterior para suavizar su sabor fuerte.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Pepitoria santandereana", descripcion: "Guiso de vísceras de cabro con arroz, arveja y cilantro.", ingredientes: ["Vísceras de cabro", "Arroz", "Arveja", "Cilantro", "Ajo"], saludable: false, economico: true, rapido: false, tip: "Pica bien fino todos los ingredientes, así es la pepitoria tradicional.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Arroz santandereano con fríjol y aguacate", descripcion: "Arroz con fríjol guisado y aguacate, sin carne.", ingredientes: ["Arroz", "Fríjol", "Aguacate", "Cebolla", "Zanahoria"], saludable: true, economico: true, rapido: false, tip: "Un sofrito de cebolla y zanahoria le da sabor sin necesidad de carne.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+    cena: [
+      { nombre: "Bagre asado santandereano", descripcion: "Bagre asado marinado en limón, ajo y cilantro.", ingredientes: ["Bagre", "Limón", "Ajo", "Cilantro", "Aceite"], saludable: true, economico: false, rapido: false, tip: "Marina el bagre al menos 20 minutos antes de asarlo.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Arepa santandereana con aguacate y limón", descripcion: "Arepa de maíz pelao con aguacate machacado y un toque de limón.", ingredientes: ["Arepa de maíz pelao", "Aguacate", "Limón", "Sal"], saludable: true, economico: true, rapido: true, tip: "Exprime el limón justo antes de servir para que el aguacate no se oxide.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+      { nombre: "Sopa de arroz con costilla santandereana", descripcion: "Sopa ligera de arroz con costilla, papa y cilantro.", ingredientes: ["Costilla", "Arroz", "Papa", "Cilantro", "Cebolla"], saludable: true, economico: true, rapido: false, tip: "Retira la espuma al hervir para un caldo más limpio.", dieta: ["sinGluten", "sinLacteos"] },
+    ],
+  },
+
+  "Eje Cafetero": {
+    desayuno: [
+      { nombre: "Arepa valluna con aguacate", descripcion: "Arepa de maíz blanco asada con aguacate machacado y tomate fresco.", ingredientes: ["Arepa valluna", "Aguacate", "Tomate", "Sal", "Limón"], saludable: true, economico: true, rapido: true, tip: "Exprime el limón justo antes de servir para que el aguacate no se oxide.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+      { nombre: "Aborrajados de plátano maduro", descripcion: "Plátano maduro frito, bañado en una mezcla de harina y huevo.", ingredientes: ["Plátano maduro", "Harina de trigo", "Huevo", "Aceite", "Azúcar"], saludable: false, economico: true, rapido: true, tip: "Fríe a fuego medio para que se dore sin quemarse antes de cocinar por dentro.", dieta: ["vegetariano", "sinLacteos"] },
+      { nombre: "Pandebono cafetero con chocolate", descripcion: "Pandebono recién horneado con chocolate caliente.", ingredientes: ["Pandebono", "Chocolate", "Leche", "Queso"], saludable: false, economico: true, rapido: false, tip: "Sirve el pandebono recién horneado, cuando aún está tibio y suave.", dieta: ["vegetariano"] },
+    ],
+    almuerzo: [
+      { nombre: "Sancocho valluno", descripcion: "Sancocho de gallina con yuca, plátano, papa y cilantro.", ingredientes: ["Gallina", "Yuca", "Plátano", "Papa", "Cilantro"], saludable: true, economico: false, rapido: false, tip: "Cocina la gallina a fuego lento para un caldo con cuerpo.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Fríjoles con garra cafeteros", descripcion: "Fríjoles guisados con garra de res, arroz, plátano y aguacate.", ingredientes: ["Fríjol", "Garra de res", "Arroz", "Plátano", "Aguacate"], saludable: false, economico: true, rapido: false, tip: "Cocina la garra aparte hasta que esté bien blanda antes de mezclarla.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Fríjoles cafeteros con arroz y aguacate", descripcion: "Fríjoles guisados sin carne, con arroz, plátano y aguacate.", ingredientes: ["Fríjol", "Arroz", "Aguacate", "Plátano", "Zanahoria"], saludable: true, economico: true, rapido: false, tip: "Un sofrito de cebolla y zanahoria le da sabor sin necesidad de carne.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+    cena: [
+      { nombre: "Tamal vallecaucano", descripcion: "Tamal de masa de maíz con pollo, cerdo y verduras, envuelto en hoja de plátano.", ingredientes: ["Masa de maíz", "Pollo", "Cerdo", "Arveja", "Hoja de plátano"], saludable: false, economico: false, rapido: false, tip: "Caliéntalo al vapor 20 min para que quede jugoso.", dieta: ["sinGluten", "sinLacteos"] },
+      { nombre: "Arepa valluna con hogao y queso", descripcion: "Arepa valluna con hogao de tomate y cebolla, cubierta de queso.", ingredientes: ["Arepa valluna", "Tomate", "Cebolla", "Queso", "Aceite"], saludable: true, economico: true, rapido: true, tip: "Cocina el hogao a fuego lento para que el tomate suelte todo su sabor.", dieta: ["vegetariano", "sinGluten"] },
+      { nombre: "Sopa de plátano cafetera", descripcion: "Sopa ligera de plátano con papa, cebolla y cilantro.", ingredientes: ["Plátano", "Papa", "Cebolla", "Cilantro", "Caldo de verduras"], saludable: true, economico: true, rapido: true, tip: "Licúa una parte de la sopa para que quede más espesa.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    ],
+  },
 };
 
-// Elige un plato del catálogo local que cumpla la dieta, evitando los del historial reciente.
-function pickFromCatalogo(tiempo, historial = [], dieta = "De todo") {
-  const aptos = (CATALOGO[tiempo] || []).filter(d => cumpleDieta(d, dieta));
-  const lista = aptos.length ? aptos : CATALOGO[tiempo] || [];
+// Elige un plato del catálogo local de la región que cumpla la dieta, evitando los del historial reciente.
+function pickFromCatalogo(tiempo, historial = [], dieta = "De todo", region = "Bogotá") {
+  const platosRegion = CATALOGO[region] || CATALOGO["Bogotá"];
+  const todos = platosRegion[tiempo] || [];
+  const aptos = todos.filter(d => cumpleDieta(d, dieta));
+  const lista = aptos.length ? aptos : todos;
   if (!lista.length) return null;
   const nombresRecientes = historial.map(h => h.nombre);
   const frescos = lista.filter(d => !nombresRecientes.includes(d.nombre));
@@ -407,7 +523,7 @@ function MealCard({ tiempo, meal, loading, onGenerate, contexto, onVerReceta }) 
 export default function BogotaMealPlanner() {
   const snap = typeof window !== "undefined" ? loadSnapshot() : null;
 
-  const [contexto, setContexto] = useState(snap?.contexto ?? { personas: "2 personas", tiempo: "20-40 min", mercado: "Lo básico", dieta: "De todo" });
+  const [contexto, setContexto] = useState(snap?.contexto ?? { personas: "2 personas", tiempo: "20-40 min", mercado: "Lo básico", region: "Bogotá", dieta: "De todo" });
   const [meals, setMeals] = useState(snap?.meals ?? { desayuno: null, almuerzo: null, cena: null });
   const [loading, setLoading] = useState({ desayuno: false, almuerzo: false, cena: false });
   const [loadingAll, setLoadingAll] = useState(false);
@@ -477,7 +593,7 @@ export default function BogotaMealPlanner() {
       if (err.name === "AbortError" || !esVigente()) return; // cancelada o reemplazada
       // Fallback elegante: usa el catálogo local y ofrece reintentar.
       console.error("Generación falló, usando catálogo local:", err);
-      const local = pickFromCatalogo(tiempo, historial, ctx?.dieta);
+      const local = pickFromCatalogo(tiempo, historial, ctx?.dieta, ctx?.region);
       if (local) {
         setMeals(prev => ({ ...prev, [tiempo]: { ...local, fallback: true } }));
         setHistorial(prev => [
@@ -498,7 +614,7 @@ export default function BogotaMealPlanner() {
       const response = await fetch(`${API_URL}/api/receta-completa`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre: meal.nombre, personas: contexto.personas }),
+        body: JSON.stringify({ nombre: meal.nombre, personas: contexto.personas, region: contexto.region }),
       });
       const receta = await response.json();
       if (!response.ok) throw new Error(receta?.error || "No se pudo cargar la receta");
@@ -565,6 +681,15 @@ export default function BogotaMealPlanner() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #EDE3D2; }
 
+        /* En iOS/Android, los botones sin este reset muestran un resaltado táctil o una
+           selección de texto nativa que se queda pintada encima del contenido al tocar. */
+        button {
+          -webkit-tap-highlight-color: transparent;
+          -webkit-user-select: none;
+          user-select: none;
+          touch-action: manipulation;
+        }
+
         .app {
           min-height: 100vh;
           max-width: 460px;
@@ -613,10 +738,24 @@ export default function BogotaMealPlanner() {
         .config-panel__hint { font-size: 11.5px; color: var(--cafe-soft); }
         .config-item { margin-bottom: 14px; }
         .config-item label { display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--cafe-soft); margin-bottom: 8px; }
-        .config-options { display: flex; flex-wrap: wrap; gap: 7px; }
-        .config-btn { padding: 8px 13px; border-radius: var(--r-sm); border: 1.5px solid var(--line); background: transparent; color: var(--cafe-soft); font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 12.5px; cursor: pointer; transition: all 0.15s; }
-        .config-btn:hover { border-color: var(--terra); color: var(--terra); }
-        .config-btn--active { background: var(--terra); border-color: var(--terra); color: #fff; box-shadow: 0 3px 9px rgba(194,91,40,0.28); }
+        .config-options { display: flex; flex-wrap: wrap; gap: 8px; }
+        .config-btn {
+          min-height: 40px; padding: 9px 14px; border-radius: var(--r-sm);
+          border: 1.5px solid var(--line); background: var(--surface); color: var(--cafe-soft);
+          font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 12.5px; cursor: pointer;
+          display: inline-flex; align-items: center; gap: 5px;
+          transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+        }
+        /* (hover: hover) evita el "hover pegado" en pantallas táctiles: sin mouse no hay
+           mouseleave, así que un :hover sin esta condición se queda activo después del tap
+           y su mayor especificidad CSS termina pisando el color de texto de --active. */
+        @media (hover: hover) {
+          .config-btn:hover { border-color: var(--terra); color: var(--terra); }
+        }
+        .config-btn:active { transform: scale(0.95); }
+        .config-btn:focus-visible { outline: 2px solid var(--terra); outline-offset: 1px; }
+        .config-btn--active, .config-btn--active:hover { background: var(--terra); border-color: var(--terra); color: #fff; box-shadow: 0 3px 9px rgba(194,91,40,0.28); }
+        .config-btn--active::before { content: '✓'; font-size: 11px; line-height: 1; }
 
         /* ───────── ACTIONS ───────── */
         .actions { padding: 16px 16px 4px; display: flex; flex-direction: column; gap: 10px; }

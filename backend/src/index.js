@@ -48,17 +48,31 @@ app.use(
 app.use(express.json());
 
 // ── PROMPT ───────────────────────────────────────────────────────────────────
-const CONTEXT_PROMPT = `Eres un asistente culinario para familias de estrato medio en Bogotá, Colombia.
-Conoces muy bien la cocina bogotana y colombiana típica: huevos pericos, caldo de costilla, changua, tamales tolimenses,
-arepas, arroz con pollo, frijoles, lentejas, sopa de pasta, mazorca, aguapanela, chocolate santafereño, etc.
+// Contexto regional: ajusta de qué región colombiana es la "sazón" de la familia.
+// Las claves deben coincidir exactamente con REGIONES en src/App.jsx.
+const REGIONES = {
+  "Bogotá": { lugar: "Bogotá, Colombia", platos: "huevos pericos, caldo de costilla, changua, tamales tolimenses, arepas, ajiaco, frijoles, lentejas, sopa de pasta, mazorca, aguapanela, chocolate santafereño" },
+  "Tolima": { lugar: "el departamento del Tolima, Colombia", platos: "tamal tolimense, lechona, viudo de pescado, mondongo, envuelto de mazorca, achiras, masato" },
+  "Antioquia": { lugar: "Antioquia, Colombia (cocina paisa)", platos: "bandeja paisa, frijoles antioqueños, mondongo, sancocho de gallina, arepa antioqueña, mazamorra, chorizo" },
+  "Costa Atlántica": { lugar: "la Costa Atlántica colombiana (Caribe)", platos: "sancocho de mariscos, arroz de lisa, mote de queso, butifarra, pescado frito con patacón, arroz con coco, carimañola" },
+  "Costa Pacífica": { lugar: "la Costa Pacífica colombiana (Chocó, Buenaventura, Nariño costero)", platos: "encocado de pescado, arroz con coco y camarón, ceviche de camarón, tapao de pescado, empanada de camarón, borojó" },
+  "Santander": { lugar: "Santander, Colombia", platos: "cabro o pepitoria, mute santandereano, arepa santandereana de maíz pelao, pan de yuca, bagre asado" },
+  "Eje Cafetero": { lugar: "el Eje Cafetero y el Valle del Cauca, Colombia", platos: "sancocho valluno, fríjoles con garra, arepa valluna, aborrajados, pandebono, tamal vallecaucano" },
+};
+
+function buildContextPrompt(region) {
+  const r = REGIONES[region] || REGIONES["Bogotá"];
+  return `Eres un asistente culinario para familias de estrato medio en ${r.lugar}.
+Conoces muy bien la cocina típica de la zona: ${r.platos}, etc.
 Las familias tienen presupuesto moderado, compran en tiendas de barrio y supermercados como Éxito o D1.
 Sugiere comidas balanceadas, sabrosas y económicas. Siempre responde en español colombiano natural.
 Cuando sea posible sin perder el sabor local, inclina tus sugerencias hacia principios de las "zonas azules"
 (regiones con más centenarios del mundo, como Cerdeña, Okinawa e Icaria): más vegetales y leguminosas,
-porciones moderadas, proteínas variadas y menos fritos o ultraprocesados — sin dejar de ser comida bogotana de verdad.`;
+porciones moderadas, proteínas variadas y menos fritos o ultraprocesados — sin dejar de ser comida típica de la región.`;
+}
 
-function buildRecetaPrompt({ nombre, personas }) {
-  return `${CONTEXT_PROMPT}
+function buildRecetaPrompt({ nombre, personas, region }) {
+  return `${buildContextPrompt(region)}
 
 Genera la receta COMPLETA y detallada de "${nombre}" para ${personas}.
 Responde ÚNICAMENTE con un JSON válido (sin texto extra, sin markdown) con esta estructura exacta:
@@ -147,7 +161,7 @@ function buildPrompt({ tiempo, contexto, historial = [], dia = "" }) {
 
   const diaTexto = dia ? ` para hoy ${dia}` : "";
 
-  return `${CONTEXT_PROMPT}
+  return `${buildContextPrompt(contexto.region)}
 
 Contexto familiar:
 - Personas en casa: ${contexto.personas}
@@ -211,7 +225,7 @@ app.post("/api/sugerir-comida", async (req, res) => {
 });
 
 app.post("/api/receta-completa", async (req, res) => {
-  const { nombre, personas } = req.body;
+  const { nombre, personas, region } = req.body;
 
   if (!nombre || !personas) {
     return res.status(400).json({
@@ -227,7 +241,7 @@ app.post("/api/receta-completa", async (req, res) => {
   }
 
   try {
-    const receta = await callGemini(buildRecetaPrompt({ nombre, personas }), 2000);
+    const receta = await callGemini(buildRecetaPrompt({ nombre, personas, region }), 2000);
     return res.json(receta);
   } catch (err) {
     console.error("Error al procesar la receta:", err.message);
