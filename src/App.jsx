@@ -12,53 +12,77 @@ const PREGUNTAS_CONTEXTO = [
   { id: "personas", label: "¿Cuántas personas en casa?", options: ["Solo", "2 personas", "3-4 personas", "5 o más"] },
   { id: "tiempo", label: "¿Cuánto tiempo tienes para cocinar?", options: ["Menos de 20 min", "20-40 min", "Más de 40 min"] },
   { id: "mercado", label: "¿Qué tan surtida está la nevera?", options: ["Casi vacía", "Lo básico", "Bien surtida"] },
+  { id: "dieta", label: "¿Alguna restricción alimentaria?", options: ["De todo", "Vegetariano", "Vegano", "Sin gluten", "Sin lácteos"] },
 ];
+
+// Mapea cada opción de dieta visible al tag interno con el que se etiquetan los platos del catálogo.
+const DIETA_TAGS = {
+  "Vegetariano": "vegetariano",
+  "Vegano": "vegano",
+  "Sin gluten": "sinGluten",
+  "Sin lácteos": "sinLacteos",
+};
+
+// "De todo" o cualquier valor desconocido no filtra nada.
+function cumpleDieta(plato, dietaLabel) {
+  const tag = DIETA_TAGS[dietaLabel];
+  if (!tag) return true;
+  return !!plato.dieta?.includes(tag);
+}
 
 // ── CATÁLOGO LOCAL ────────────────────────────────────────────────────────────
 // Respaldo curado de cocina bogotana/colombiana. Se usa cuando la API falla o no
 // hay internet, para que el usuario nunca se quede sin sugerencia.
 const CATALOGO = {
   desayuno: [
-    { nombre: "Huevos pericos con arepa", descripcion: "Huevos revueltos con cebolla larga y tomate, con arepa asada y queso campesino.", ingredientes: ["Huevos", "Cebolla larga", "Tomate", "Arepa", "Queso"], saludable: true, economico: true, rapido: true, tip: "Cocina el tomate y la cebolla antes de echar el huevo." },
-    { nombre: "Calentado bogotano", descripcion: "Arroz, frijoles y carne salteados, con arepa y huevo frito encima.", ingredientes: ["Arroz", "Frijoles", "Carne", "Arepa", "Huevo"], saludable: false, economico: true, rapido: true, tip: "Aprovecha las sobras de la noche anterior." },
-    { nombre: "Changua santafereña", descripcion: "Sopa de leche caliente con huevo pochado, cebolla larga y cilantro, con calado.", ingredientes: ["Leche", "Huevos", "Cebolla larga", "Cilantro", "Calado"], saludable: true, economico: true, rapido: true, tip: "Apaga el fuego apenas cuaje el huevo." },
-    { nombre: "Caldo de costilla con papa", descripcion: "Caldo levanta-muertos de costilla con papa entera y cilantro.", ingredientes: ["Costilla", "Papa pastusa", "Cilantro", "Cebolla", "Arepa"], saludable: false, economico: true, rapido: false, tip: "Sírvelo bien caliente con arepa y café." },
-    { nombre: "Chocolate santafereño con almojábanas", descripcion: "Chocolate caliente espumoso con almojábanas tibias y queso para hundir.", ingredientes: ["Chocolate", "Leche", "Almojábanas", "Queso", "Pan"], saludable: false, economico: false, rapido: true, tip: "Bate el chocolate con molinillo para la espuma." },
-    { nombre: "Arepa de huevo", descripcion: "Arepa rellena de huevo y fritada hasta quedar dorada y crocante.", ingredientes: ["Masa de maíz", "Huevos", "Aceite", "Sal", "Suero"], saludable: false, economico: true, rapido: true, tip: "Sella bien los bordes para que el huevo no se salga." },
-    { nombre: "Huevos tibios con tostadas", descripcion: "Huevos tibios en pocillo con tostadas de pan y mantequilla.", ingredientes: ["Huevos", "Pan", "Mantequilla", "Sal", "Café"], saludable: true, economico: true, rapido: true, tip: "3 minutos en agua hirviendo para la yema cremosa." },
-    { nombre: "Tamal tolimense con chocolate", descripcion: "Tamal de masa de maíz con pollo, cerdo y verduras, con chocolate.", ingredientes: ["Masa de maíz", "Pollo", "Cerdo", "Arveja", "Hoja"], saludable: false, economico: false, rapido: false, tip: "Caliéntalo al vapor 20 min para que quede jugoso." },
-    { nombre: "Avena caliente con pan", descripcion: "Avena cremosa con canela y panela, acompañada de pan tajado.", ingredientes: ["Avena", "Leche", "Panela", "Canela", "Pan"], saludable: true, economico: true, rapido: true, tip: "Una pizca de sal realza el dulce de la panela." },
+    { nombre: "Huevos pericos con arepa", descripcion: "Huevos revueltos con cebolla larga y tomate, con arepa asada y queso campesino.", ingredientes: ["Huevos", "Cebolla larga", "Tomate", "Arepa", "Queso"], saludable: true, economico: true, rapido: true, tip: "Cocina el tomate y la cebolla antes de echar el huevo.", dieta: ["vegetariano", "sinGluten"] },
+    { nombre: "Calentado bogotano", descripcion: "Arroz, frijoles y carne salteados, con arepa y huevo frito encima.", ingredientes: ["Arroz", "Frijoles", "Carne", "Arepa", "Huevo"], saludable: false, economico: true, rapido: true, tip: "Aprovecha las sobras de la noche anterior.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Changua santafereña", descripcion: "Sopa de leche caliente con huevo pochado, cebolla larga y cilantro, con calado.", ingredientes: ["Leche", "Huevos", "Cebolla larga", "Cilantro", "Calado"], saludable: true, economico: true, rapido: true, tip: "Apaga el fuego apenas cuaje el huevo.", dieta: ["vegetariano"] },
+    { nombre: "Caldo de costilla con papa", descripcion: "Caldo levanta-muertos de costilla con papa entera y cilantro.", ingredientes: ["Costilla", "Papa pastusa", "Cilantro", "Cebolla", "Arepa"], saludable: false, economico: true, rapido: false, tip: "Sírvelo bien caliente con arepa y café.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Chocolate santafereño con almojábanas", descripcion: "Chocolate caliente espumoso con almojábanas tibias y queso para hundir.", ingredientes: ["Chocolate", "Leche", "Almojábanas", "Queso", "Pan"], saludable: false, economico: false, rapido: true, tip: "Bate el chocolate con molinillo para la espuma.", dieta: ["vegetariano"] },
+    { nombre: "Arepa de huevo", descripcion: "Arepa rellena de huevo y fritada hasta quedar dorada y crocante.", ingredientes: ["Masa de maíz", "Huevos", "Aceite", "Sal", "Suero"], saludable: false, economico: true, rapido: true, tip: "Sella bien los bordes para que el huevo no se salga.", dieta: ["vegetariano", "sinGluten"] },
+    { nombre: "Huevos tibios con tostadas", descripcion: "Huevos tibios en pocillo con tostadas de pan y mantequilla.", ingredientes: ["Huevos", "Pan", "Mantequilla", "Sal", "Café"], saludable: true, economico: true, rapido: true, tip: "3 minutos en agua hirviendo para la yema cremosa.", dieta: ["vegetariano"] },
+    { nombre: "Tamal tolimense con chocolate", descripcion: "Tamal de masa de maíz con pollo, cerdo y verduras, con chocolate.", ingredientes: ["Masa de maíz", "Pollo", "Cerdo", "Arveja", "Hoja"], saludable: false, economico: false, rapido: false, tip: "Caliéntalo al vapor 20 min para que quede jugoso.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Avena caliente con pan", descripcion: "Avena cremosa con canela y panela, acompañada de pan tajado.", ingredientes: ["Avena", "Leche", "Panela", "Canela", "Pan"], saludable: true, economico: true, rapido: true, tip: "Una pizca de sal realza el dulce de la panela.", dieta: ["vegetariano"] },
+    { nombre: "Arepa con aguacate y tomate", descripcion: "Arepa asada con aguacate machacado, tomate fresco y un toque de limón.", ingredientes: ["Arepa", "Aguacate", "Tomate", "Limón", "Sal"], saludable: true, economico: true, rapido: true, tip: "Exprime el limón justo antes de servir para que el aguacate no se oxide.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
   ],
   almuerzo: [
-    { nombre: "Ajiaco santafereño", descripcion: "Sopa de tres papas y pollo con guascas, crema, alcaparras y aguacate.", ingredientes: ["Pollo", "Papa criolla", "Mazorca", "Guascas", "Crema"], saludable: true, economico: false, rapido: false, tip: "La papa criolla se deshace y da el cuerpo cremoso." },
-    { nombre: "Frijoles con arroz y patacón", descripcion: "Frijol cargamanto con arroz blanco, patacón crocante y aguacate.", ingredientes: ["Frijol", "Plátano", "Arroz", "Aguacate", "Carne"], saludable: false, economico: true, rapido: false, tip: "Un chorrito de aceite deja los frijoles más brillantes." },
-    { nombre: "Bandeja paisa", descripcion: "Frijoles, arroz, chicharrón, carne molida, chorizo, huevo, arepa y aguacate.", ingredientes: ["Frijol", "Arroz", "Chicharrón", "Carne molida", "Huevo"], saludable: false, economico: false, rapido: false, tip: "El chicharrón al final para que quede crocante." },
-    { nombre: "Sancocho de gallina", descripcion: "Sancocho con presa de gallina, yuca, plátano, papa y mazorca.", ingredientes: ["Gallina", "Yuca", "Plátano", "Papa", "Mazorca"], saludable: true, economico: false, rapido: false, tip: "Cocina la gallina a fuego lento para un caldo con cuerpo." },
-    { nombre: "Arroz con pollo", descripcion: "Arroz amarillo salteado con pollo desmechado y verduras.", ingredientes: ["Arroz", "Pollo", "Zanahoria", "Arveja", "Pimentón"], saludable: false, economico: true, rapido: false, tip: "Sofríe el arroz antes de añadir el caldo." },
-    { nombre: "Sobrebarriga en salsa criolla", descripcion: "Sobrebarriga blanda bañada en hogao, con papa salada y arroz.", ingredientes: ["Sobrebarriga", "Tomate", "Cebolla", "Papa", "Arroz"], saludable: false, economico: false, rapido: false, tip: "Cocínala en olla a presión para que quede tierna." },
-    { nombre: "Lentejas con arroz y carne", descripcion: "Lentejas guisadas con verduras, arroz blanco y carne en bistec.", ingredientes: ["Lentejas", "Arroz", "Carne", "Zanahoria", "Plátano"], saludable: true, economico: true, rapido: false, tip: "No agregues sal hasta que las lentejas estén blandas." },
-    { nombre: "Sudado de pollo", descripcion: "Pollo sudado en hogao con papa, yuca y zanahoria, con arroz.", ingredientes: ["Pollo", "Papa", "Yuca", "Tomate", "Arroz"], saludable: false, economico: true, rapido: false, tip: "Tapar la olla concentra el sabor del hogao." },
-    { nombre: "Espagueti con carne molida", descripcion: "Pasta en salsa de tomate casera con carne molida y queso rallado.", ingredientes: ["Pasta", "Carne molida", "Tomate", "Cebolla", "Queso"], saludable: false, economico: true, rapido: true, tip: "Reserva agua de la pasta para soltar la salsa." },
-    { nombre: "Carne asada con papa y ensalada", descripcion: "Churrasco a la plancha con papa criolla dorada y ensalada fresca.", ingredientes: ["Carne", "Papa criolla", "Lechuga", "Tomate", "Cebolla"], saludable: true, economico: false, rapido: false, tip: "Deja reposar la carne 5 min antes de cortarla." },
+    { nombre: "Ajiaco santafereño", descripcion: "Sopa de tres papas y pollo con guascas, crema, alcaparras y aguacate.", ingredientes: ["Pollo", "Papa criolla", "Mazorca", "Guascas", "Crema"], saludable: true, economico: false, rapido: false, tip: "La papa criolla se deshace y da el cuerpo cremoso.", dieta: ["sinGluten"] },
+    { nombre: "Frijoles con arroz y patacón", descripcion: "Frijol cargamanto con arroz blanco, patacón crocante y aguacate.", ingredientes: ["Frijol", "Plátano", "Arroz", "Aguacate", "Carne"], saludable: false, economico: true, rapido: false, tip: "Un chorrito de aceite deja los frijoles más brillantes.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Bandeja paisa", descripcion: "Frijoles, arroz, chicharrón, carne molida, chorizo, huevo, arepa y aguacate.", ingredientes: ["Frijol", "Arroz", "Chicharrón", "Carne molida", "Huevo"], saludable: false, economico: false, rapido: false, tip: "El chicharrón al final para que quede crocante.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Sancocho de gallina", descripcion: "Sancocho con presa de gallina, yuca, plátano, papa y mazorca.", ingredientes: ["Gallina", "Yuca", "Plátano", "Papa", "Mazorca"], saludable: true, economico: false, rapido: false, tip: "Cocina la gallina a fuego lento para un caldo con cuerpo.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Arroz con pollo", descripcion: "Arroz amarillo salteado con pollo desmechado y verduras.", ingredientes: ["Arroz", "Pollo", "Zanahoria", "Arveja", "Pimentón"], saludable: false, economico: true, rapido: false, tip: "Sofríe el arroz antes de añadir el caldo.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Sobrebarriga en salsa criolla", descripcion: "Sobrebarriga blanda bañada en hogao, con papa salada y arroz.", ingredientes: ["Sobrebarriga", "Tomate", "Cebolla", "Papa", "Arroz"], saludable: false, economico: false, rapido: false, tip: "Cocínala en olla a presión para que quede tierna.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Lentejas con arroz y carne", descripcion: "Lentejas guisadas con verduras, arroz blanco y carne en bistec.", ingredientes: ["Lentejas", "Arroz", "Carne", "Zanahoria", "Plátano"], saludable: true, economico: true, rapido: false, tip: "No agregues sal hasta que las lentejas estén blandas.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Sudado de pollo", descripcion: "Pollo sudado en hogao con papa, yuca y zanahoria, con arroz.", ingredientes: ["Pollo", "Papa", "Yuca", "Tomate", "Arroz"], saludable: false, economico: true, rapido: false, tip: "Tapar la olla concentra el sabor del hogao.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Espagueti con carne molida", descripcion: "Pasta en salsa de tomate casera con carne molida y queso rallado.", ingredientes: ["Pasta", "Carne molida", "Tomate", "Cebolla", "Queso"], saludable: false, economico: true, rapido: true, tip: "Reserva agua de la pasta para soltar la salsa.", dieta: [] },
+    { nombre: "Carne asada con papa y ensalada", descripcion: "Churrasco a la plancha con papa criolla dorada y ensalada fresca.", ingredientes: ["Carne", "Papa criolla", "Lechuga", "Tomate", "Cebolla"], saludable: true, economico: false, rapido: false, tip: "Deja reposar la carne 5 min antes de cortarla.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Fríjoles vegetarianos con arroz y patacón", descripcion: "Fríjol cargamanto guisado con verduras, sin carne, con arroz blanco y patacón.", ingredientes: ["Frijol cargamanto", "Plátano", "Arroz", "Aguacate", "Zanahoria"], saludable: true, economico: true, rapido: false, tip: "Un sofrito de cebolla y zanahoria le da sabor sin necesidad de carne.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    { nombre: "Lentejas guisadas con arroz y aguacate", descripcion: "Lentejas guisadas con zanahoria y cebolla, con arroz blanco y aguacate.", ingredientes: ["Lentejas", "Arroz", "Zanahoria", "Cebolla", "Aguacate"], saludable: true, economico: true, rapido: false, tip: "No agregues sal hasta que las lentejas estén blandas.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    { nombre: "Garbanzos guisados con arroz y ensalada", descripcion: "Garbanzos guisados en hogao con arroz blanco y ensalada fresca.", ingredientes: ["Garbanzos", "Arroz", "Tomate", "Cebolla", "Lechuga"], saludable: true, economico: true, rapido: false, tip: "Remoja los garbanzos la noche anterior si los usas secos.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
   ],
   cena: [
-    { nombre: "Caldo de costilla", descripcion: "Caldo de costilla de res con papa entera y mucho cilantro fresco.", ingredientes: ["Costilla", "Papa", "Cilantro", "Cebolla", "Ajo"], saludable: true, economico: true, rapido: false, tip: "Retira la espuma al hervir para un caldo más limpio." },
-    { nombre: "Changua bogotana", descripcion: "Sopa de leche con huevos pochados, cebolla larga y cilantro, con calado.", ingredientes: ["Leche", "Huevos", "Cebolla larga", "Cilantro", "Calado"], saludable: false, economico: true, rapido: true, tip: "Cuaja el huevo justo antes de servir." },
-    { nombre: "Crema de ahuyama", descripcion: "Crema suave de ahuyama con un toque de queso y crostones de pan.", ingredientes: ["Ahuyama", "Cebolla", "Caldo", "Crema", "Pan"], saludable: true, economico: true, rapido: false, tip: "Licúala bien caliente para una textura sedosa." },
-    { nombre: "Sopa de pasta con verduras", descripcion: "Sopa ligera de pasta con zanahoria, papa y cilantro.", ingredientes: ["Pasta", "Zanahoria", "Papa", "Cilantro", "Caldo"], saludable: true, economico: true, rapido: true, tip: "Añade la pasta al final para que no se pase." },
-    { nombre: "Patacones con hogao y queso", descripcion: "Patacones crocantes con hogao y queso costeño rallado.", ingredientes: ["Plátano verde", "Tomate", "Cebolla", "Queso", "Aceite"], saludable: false, economico: true, rapido: true, tip: "Fríe el plátano dos veces, aplastándolo en medio." },
-    { nombre: "Tortilla de huevo con ensalada", descripcion: "Tortilla esponjosa con cebolla y tomate, con ensalada verde.", ingredientes: ["Huevos", "Cebolla", "Tomate", "Lechuga", "Pan"], saludable: true, economico: true, rapido: true, tip: "Cocina a fuego medio-bajo para que quede jugosa." },
-    { nombre: "Caldo de papa con huevo", descripcion: "Caldo sencillo de papa con huevo escalfado, cebolla larga y cilantro.", ingredientes: ["Papa", "Huevos", "Cebolla larga", "Cilantro", "Ajo"], saludable: false, economico: true, rapido: true, tip: "Escalfa el huevo directo en el caldo hirviendo." },
-    { nombre: "Arepa rellena de huevo y queso", descripcion: "Arepa asada rellena de huevo revuelto con queso fundido.", ingredientes: ["Arepa", "Huevos", "Queso", "Mantequilla", "Sal"], saludable: false, economico: true, rapido: true, tip: "Tapa la arepa para que el queso se derrita." },
-    { nombre: "Sopa de avena con pollo", descripcion: "Sopa cremosa de avena en hojuelas con pollo desmechado y verduras.", ingredientes: ["Avena", "Pollo", "Zanahoria", "Cebolla", "Cilantro"], saludable: true, economico: true, rapido: false, tip: "La avena espesa el caldo sin necesidad de harina." },
+    { nombre: "Caldo de costilla", descripcion: "Caldo de costilla de res con papa entera y mucho cilantro fresco.", ingredientes: ["Costilla", "Papa", "Cilantro", "Cebolla", "Ajo"], saludable: true, economico: true, rapido: false, tip: "Retira la espuma al hervir para un caldo más limpio.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Changua bogotana", descripcion: "Sopa de leche con huevos pochados, cebolla larga y cilantro, con calado.", ingredientes: ["Leche", "Huevos", "Cebolla larga", "Cilantro", "Calado"], saludable: false, economico: true, rapido: true, tip: "Cuaja el huevo justo antes de servir.", dieta: ["vegetariano"] },
+    { nombre: "Crema de ahuyama", descripcion: "Crema suave de ahuyama con un toque de queso y crostones de pan.", ingredientes: ["Ahuyama", "Cebolla", "Caldo", "Crema", "Pan"], saludable: true, economico: true, rapido: false, tip: "Licúala bien caliente para una textura sedosa.", dieta: ["vegetariano"] },
+    { nombre: "Sopa de pasta con verduras", descripcion: "Sopa ligera de pasta con zanahoria, papa y cilantro.", ingredientes: ["Pasta", "Zanahoria", "Papa", "Cilantro", "Caldo"], saludable: true, economico: true, rapido: true, tip: "Añade la pasta al final para que no se pase.", dieta: ["vegetariano", "vegano", "sinLacteos"] },
+    { nombre: "Patacones con hogao y queso", descripcion: "Patacones crocantes con hogao y queso costeño rallado.", ingredientes: ["Plátano verde", "Tomate", "Cebolla", "Queso", "Aceite"], saludable: false, economico: true, rapido: true, tip: "Fríe el plátano dos veces, aplastándolo en medio.", dieta: ["vegetariano", "sinGluten"] },
+    { nombre: "Tortilla de huevo con ensalada", descripcion: "Tortilla esponjosa con cebolla y tomate, con ensalada verde.", ingredientes: ["Huevos", "Cebolla", "Tomate", "Lechuga", "Pan"], saludable: true, economico: true, rapido: true, tip: "Cocina a fuego medio-bajo para que quede jugosa.", dieta: ["vegetariano", "sinLacteos"] },
+    { nombre: "Caldo de papa con huevo", descripcion: "Caldo sencillo de papa con huevo escalfado, cebolla larga y cilantro.", ingredientes: ["Papa", "Huevos", "Cebolla larga", "Cilantro", "Ajo"], saludable: false, economico: true, rapido: true, tip: "Escalfa el huevo directo en el caldo hirviendo.", dieta: ["vegetariano", "sinGluten", "sinLacteos"] },
+    { nombre: "Arepa rellena de huevo y queso", descripcion: "Arepa asada rellena de huevo revuelto con queso fundido.", ingredientes: ["Arepa", "Huevos", "Queso", "Mantequilla", "Sal"], saludable: false, economico: true, rapido: true, tip: "Tapa la arepa para que el queso se derrita.", dieta: ["vegetariano", "sinGluten"] },
+    { nombre: "Sopa de avena con pollo", descripcion: "Sopa cremosa de avena en hojuelas con pollo desmechado y verduras.", ingredientes: ["Avena", "Pollo", "Zanahoria", "Cebolla", "Cilantro"], saludable: true, economico: true, rapido: false, tip: "La avena espesa el caldo sin necesidad de harina.", dieta: ["sinGluten", "sinLacteos"] },
+    { nombre: "Sopa de lentejas con verduras", descripcion: "Sopa de lentejas con zanahoria, papa, cebolla y cilantro.", ingredientes: ["Lentejas", "Zanahoria", "Papa", "Cilantro", "Cebolla"], saludable: true, economico: true, rapido: false, tip: "Licúa una parte de la sopa para que quede más espesa.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
+    { nombre: "Patacones con guacamole", descripcion: "Patacones crocantes acompañados de guacamole fresco con limón.", ingredientes: ["Plátano verde", "Aguacate", "Tomate", "Cebolla", "Limón"], saludable: true, economico: true, rapido: true, tip: "Machaca el aguacate justo antes de servir para que no se oxide.", dieta: ["vegetariano", "vegano", "sinGluten", "sinLacteos"] },
   ],
 };
 
-// Elige un plato del catálogo local evitando los del historial reciente.
-function pickFromCatalogo(tiempo, historial = []) {
-  const lista = CATALOGO[tiempo] || [];
+// Elige un plato del catálogo local que cumpla la dieta, evitando los del historial reciente.
+function pickFromCatalogo(tiempo, historial = [], dieta = "De todo") {
+  const aptos = (CATALOGO[tiempo] || []).filter(d => cumpleDieta(d, dieta));
+  const lista = aptos.length ? aptos : CATALOGO[tiempo] || [];
   if (!lista.length) return null;
-  const frescos = lista.filter(d => !historial.includes(d.nombre));
+  const nombresRecientes = historial.map(h => h.nombre);
+  const frescos = lista.filter(d => !nombresRecientes.includes(d.nombre));
   const pool = frescos.length ? frescos : lista;
   return { ...pool[Math.floor(Math.random() * pool.length)], _local: true };
 }
@@ -79,6 +103,21 @@ function loadSnapshot() {
     return data;
   } catch (e) {
     return null;
+  }
+}
+
+// El historial de comidas vive aparte del plan del día: a diferencia de
+// `qch:plan`, NO se descarta al cambiar de día — así el backend puede usarlo
+// para evitar repeticiones y balancear la alimentación entre varios días.
+const HISTORIAL_KEY = "qch:historial";
+const HISTORIAL_MAX = 21; // ~7 días de desayuno/almuerzo/cena
+
+function loadHistorial() {
+  try {
+    const raw = localStorage.getItem(HISTORIAL_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
   }
 }
 
@@ -368,13 +407,13 @@ function MealCard({ tiempo, meal, loading, onGenerate, contexto, onVerReceta }) 
 export default function BogotaMealPlanner() {
   const snap = typeof window !== "undefined" ? loadSnapshot() : null;
 
-  const [contexto, setContexto] = useState(snap?.contexto ?? { personas: "2 personas", tiempo: "20-40 min", mercado: "Lo básico" });
+  const [contexto, setContexto] = useState(snap?.contexto ?? { personas: "2 personas", tiempo: "20-40 min", mercado: "Lo básico", dieta: "De todo" });
   const [meals, setMeals] = useState(snap?.meals ?? { desayuno: null, almuerzo: null, cena: null });
   const [loading, setLoading] = useState({ desayuno: false, almuerzo: false, cena: false });
   const [loadingAll, setLoadingAll] = useState(false);
   const [showConfig, setShowConfig] = useState(snap ? !!snap.showConfig : true);
   const [dia, setDia] = useState("");
-  const [historial, setHistorial] = useState(snap?.historial ?? []);
+  const [historial, setHistorial] = useState(typeof window !== "undefined" ? loadHistorial() : []);
   const [modalTiempo, setModalTiempo] = useState(null);
   const [loadingReceta, setLoadingReceta] = useState(false);
 
@@ -389,9 +428,16 @@ export default function BogotaMealPlanner() {
   // Persiste el plan del día (incluye las recetas ya cargadas dentro de meals).
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ fecha: hoyISO(), contexto, meals, historial, showConfig }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ fecha: hoyISO(), contexto, meals, showConfig }));
     } catch (e) { /* almacenamiento no disponible */ }
-  }, [contexto, meals, historial, showConfig]);
+  }, [contexto, meals, showConfig]);
+
+  // Persiste el historial aparte, sin reiniciarlo al cambiar de día.
+  useEffect(() => {
+    try {
+      localStorage.setItem(HISTORIAL_KEY, JSON.stringify(historial));
+    } catch (e) { /* almacenamiento no disponible */ }
+  }, [historial]);
 
   const generateMeal = async (tiempo, ctx) => {
     // Cancela cualquier petición anterior de esta comida y marca esta como la vigente.
@@ -423,15 +469,21 @@ export default function BogotaMealPlanner() {
       };
       if (!esVigente()) return; // llegó una respuesta vieja → ignórala
       setMeals(prev => ({ ...prev, [tiempo]: meal }));
-      setHistorial(prev => [meal.nombre, ...prev].slice(0, 12));
+      setHistorial(prev => [
+        { nombre: meal.nombre, tiempo, fecha: hoyISO(), saludable: meal.saludable },
+        ...prev,
+      ].slice(0, HISTORIAL_MAX));
     } catch (err) {
       if (err.name === "AbortError" || !esVigente()) return; // cancelada o reemplazada
       // Fallback elegante: usa el catálogo local y ofrece reintentar.
       console.error("Generación falló, usando catálogo local:", err);
-      const local = pickFromCatalogo(tiempo, historial);
+      const local = pickFromCatalogo(tiempo, historial, ctx?.dieta);
       if (local) {
         setMeals(prev => ({ ...prev, [tiempo]: { ...local, fallback: true } }));
-        setHistorial(prev => [local.nombre, ...prev].slice(0, 12));
+        setHistorial(prev => [
+          { nombre: local.nombre, tiempo, fecha: hoyISO(), saludable: !!local.saludable },
+          ...prev,
+        ].slice(0, HISTORIAL_MAX));
       }
     } finally {
       if (esVigente()) setLoading(prev => ({ ...prev, [tiempo]: false }));

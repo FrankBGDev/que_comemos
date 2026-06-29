@@ -52,7 +52,10 @@ const CONTEXT_PROMPT = `Eres un asistente culinario para familias de estrato med
 Conoces muy bien la cocina bogotana y colombiana típica: huevos pericos, caldo de costilla, changua, tamales tolimenses,
 arepas, arroz con pollo, frijoles, lentejas, sopa de pasta, mazorca, aguapanela, chocolate santafereño, etc.
 Las familias tienen presupuesto moderado, compran en tiendas de barrio y supermercados como Éxito o D1.
-Sugiere comidas balanceadas, sabrosas y económicas. Siempre responde en español colombiano natural.`;
+Sugiere comidas balanceadas, sabrosas y económicas. Siempre responde en español colombiano natural.
+Cuando sea posible sin perder el sabor local, inclina tus sugerencias hacia principios de las "zonas azules"
+(regiones con más centenarios del mundo, como Cerdeña, Okinawa e Icaria): más vegetales y leguminosas,
+porciones moderadas, proteínas variadas y menos fritos o ultraprocesados — sin dejar de ser comida bogotana de verdad.`;
 
 function buildRecetaPrompt({ nombre, personas }) {
   return `${CONTEXT_PROMPT}
@@ -116,11 +119,31 @@ async function callGemini(prompt, maxOutputTokens) {
   return JSON.parse(text.replace(/```json|```/g, "").trim());
 }
 
+// Instrucción extra según la restricción alimentaria seleccionada. "De todo" (o cualquier valor
+// desconocido) no agrega nada — ver DIETA_TAGS en src/App.jsx para las opciones que ofrece la UI.
+const DIETA_INSTRUCCIONES = {
+  "Vegetariano": "\nLa familia es vegetariana: la sugerencia NO debe incluir carne, pollo, pescado ni mariscos. Huevos y lácteos sí están permitidos.",
+  "Vegano": "\nLa familia es vegana: la sugerencia NO debe incluir ningún producto de origen animal (carne, pollo, pescado, huevos, leche, queso, mantequilla, miel, etc.).",
+  "Sin gluten": "\nAlguien en la familia no puede comer gluten: evita trigo, pan, pasta, harina de trigo y cualquier ingrediente que lo contenga.",
+  "Sin lácteos": "\nAlguien en la familia no puede comer lácteos: evita leche, queso, crema, mantequilla y derivados.",
+};
+
 function buildPrompt({ tiempo, contexto, historial = [], dia = "" }) {
+  const nombresRecientes = historial.map((h) => h.nombre).filter(Boolean);
   const historialTexto =
-    historial.length > 0
-      ? `\nEvita repetir estas comidas recientes: ${historial.join(", ")}.`
+    nombresRecientes.length > 0
+      ? `\nEvita repetir estas comidas recientes: ${nombresRecientes.join(", ")}.`
       : "";
+
+  // Mira solo las últimas comidas (~2 días) para decidir si hay que compensar.
+  const recientes = historial.slice(0, 6);
+  const noSaludables = recientes.filter((h) => h.saludable === false).length;
+  const balanceTexto =
+    recientes.length >= 3 && noSaludables >= Math.ceil(recientes.length / 2)
+      ? "\nLas últimas comidas registradas han sido pesadas o poco saludables — prioriza hoy una opción más liviana, con más vegetales o leguminosas, para compensar."
+      : "";
+
+  const dietaTexto = DIETA_INSTRUCCIONES[contexto.dieta] || "";
 
   const diaTexto = dia ? ` para hoy ${dia}` : "";
 
@@ -130,7 +153,7 @@ Contexto familiar:
 - Personas en casa: ${contexto.personas}
 - Tiempo disponible: ${contexto.tiempo}
 - Estado de la nevera: ${contexto.mercado}
-${historialTexto}
+${historialTexto}${balanceTexto}${dietaTexto}
 
 Sugiere UNA opción de ${tiempo}${diaTexto}.
 Responde ÚNICAMENTE con un JSON válido (sin texto extra, sin markdown) con esta estructura exacta:

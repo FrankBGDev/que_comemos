@@ -22,19 +22,23 @@ Single-component React app. All logic, state, and styles live in `src/App.jsx`. 
 **Component tree:**
 ```
 BogotaMealPlanner  ← root, owns all state
-├── LoadingDots    ← animation only
-└── MealCard       ← rendered 3×: desayuno, almuerzo, cena
+├── MealCard       ← rendered 3×: desayuno, almuerzo, cena
+│   └── MealCardSkeleton  ← shown while loading before first result
+└── RecipeModal    ← bottom sheet, lazy-loads full recipe on demand
+    └── RecipeSkeleton
 ```
 
 **State shape:**
 ```js
-contexto:   { personas, tiempo, mercado }  // user config selections
-meals:      { desayuno, almuerzo, cena }   // current meal suggestions (null or object)
-loading:    { desayuno, almuerzo, cena }   // per-meal loading flags
-loadingAll: bool                           // "plan full day" in progress
-showConfig: bool
-dia:        string                         // Spanish day name, set on mount
-historial:  string[]                       // last 10 meal names, sent to the backend to avoid repeats
+contexto:      { personas, tiempo, mercado, dieta }  // user config selections; dieta: "De todo" | "Vegetariano" | "Vegano" | "Sin gluten" | "Sin lácteos"
+meals:         { desayuno, almuerzo, cena }   // null | meal object (may include .receta and .fallback flags)
+loading:       { desayuno, almuerzo, cena }   // per-meal loading flags
+loadingAll:    bool                           // "plan full day" in progress
+loadingReceta: bool                           // recipe fetch in progress
+showConfig:    bool
+dia:           string                         // Spanish day name, set on mount
+historial:     { nombre, tiempo, fecha, saludable }[]  // last 21 meals (~7 days), sent to backend to avoid repeats and balance nutrition
+modalTiempo:   string | null                  // which meal's recipe modal is open
 ```
 
 **Data flow:**
@@ -42,8 +46,13 @@ historial:  string[]                       // last 10 meal names, sent to the ba
 2. `generateAll()` calls `generateMeal(tiempo)` for all three meals in parallel via `Promise.all`
 3. `generateMeal()` sends `{ tiempo, contexto, historial, dia }` → `fetch` to the backend proxy (`${VITE_API_URL}/api/sugerir-comida`), which builds the prompt and calls Gemini
 4. Backend returns the parsed meal JSON directly → stored in `meals[tiempo]`
-5. "Otra opción 🔄" triggers `generateMeal()` for a single meal slot
-6. "Ver receta" calls `loadReceta(tiempo)` → `fetch` to `${VITE_API_URL}/api/receta-completa` for the full step-by-step recipe
+5. "Otra opción ↻" triggers `generateMeal()` for a single meal slot
+6. "Ver receta" opens `RecipeModal`; the modal calls `loadReceta(tiempo)` → `fetch` to `${VITE_API_URL}/api/receta-completa`. The full recipe is cached into `meals[tiempo].receta` — subsequent opens skip the fetch.
+7. If Gemini fails, `generateMeal()` falls back to `pickFromCatalogo()` (the local `CATALOGO` object in `App.jsx`). Fallback meals get `{ ...meal, fallback: true }`, which renders a "sin conexión" banner with a retry button.
+
+**Dietary filter (`contexto.dieta`):** Each dish in `CATALOGO` carries a `dieta: string[]` tag from `{"vegetariano", "vegano", "sinGluten", "sinLacteos"}` (vegan dishes are tagged with both `vegetariano` and `vegano`). `cumpleDieta(plato, dietaLabel)` checks a dish against the selected label via the `DIETA_TAGS` map; `"De todo"` or an unrecognized label always passes. `pickFromCatalogo()` filters by this before picking, falling back to the full unfiltered list only if no dish in that meal slot matches (shouldn't happen given current catalog coverage — kept as a safety net, never silently ignore a real dietary restriction without checking coverage first). On the backend, `buildPrompt()` looks up `contexto.dieta` in `DIETA_INSTRUCCIONES` (in `backend/src/index.js`) and appends an explicit restriction line to the Gemini prompt; the same labels must stay in sync between both files.
+
+**Stale-request cancellation:** `generateMeal` uses `reqRef` (a `useRef`) with `AbortController` + a sequence number per meal slot. Each new call aborts the previous in-flight request for that slot and ignores responses that arrive after a newer call was made. Do not remove this pattern when modifying `generateMeal`.
 
 **Meal suggestion response format:**
 ```json
@@ -57,6 +66,23 @@ historial:  string[]                       // last 10 meal names, sent to the ba
   "tip": string
 }
 ```
+
+**Full recipe response format** (stored in `meals[tiempo].receta`):
+```json
+{
+  "tiempo_total": number,
+  "porciones": string,
+  "dificultad": string,
+  "ingredientes": [{ "nombre": string, "cantidad": string, "unidad": string }],
+  "utensilios": string[],
+  "pasos": [{ "descripcion": string, "tiempo_minutos": number, "tip": string }],
+  "valor_nutricional": { "Calorías": string, "Proteína": string, ... }
+}
+```
+
+**localStorage persistence:** The day plan (`contexto`, `meals`, `showConfig`) is saved under key `"qch:plan"` with a `fecha` (ISO date). On load, `loadSnapshot()` restores it if the date matches today; otherwise it returns `null` and the app starts fresh. Recipes already fetched are included in the snapshot. `historial` is persisted **separately** under `"qch:historial"` (via `loadHistorial()`) and does **not** reset on day change — it accumulates across days, capped at `HISTORIAL_MAX` (21) entries, so the backend can reason about what was eaten over the last several days, not just within today's session.
+
+**`callGemini` — `thinkingBudget: 0`:** Gemini's thinking mode is explicitly disabled. Without this, the internal reasoning consumes the output token budget and truncates the JSON response.
 
 ## Styling
 
@@ -79,3 +105,5 @@ AI calls go through Google Gemini (`gemini-flash-lite-latest` by default, overri
 ## Language & Domain
 
 All UI text and prompts are in Colombian Spanish (Bogotá dialect). The system prompt (`CONTEXT_PROMPT`, defined in `backend/src/index.js`) targets middle-income Bogotá families and references local dishes (huevos pericos, changua, tamales, arepas) and stores (Éxito, D1, barrio tiendas). Keep this context when modifying prompts.
+
+`CONTEXT_PROMPT` also nudges suggestions toward "zona azul" (blue zone) principles — more vegetables/legumes, moderate portions, less fried/ultra-processed food — without abandoning local dishes. `buildPrompt()` additionally inspects the last 6 `historial` entries (~2 days): if most are tagged `saludable: false`, it appends an explicit instruction to suggest something lighter to compensate. This is the foundation for the longer-term goal of food-history-aware, health-oriented suggestions (see project memory for the fuller roadmap).
