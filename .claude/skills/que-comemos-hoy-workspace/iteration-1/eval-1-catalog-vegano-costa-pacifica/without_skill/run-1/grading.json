@@ -1,0 +1,11 @@
+{
+  "expectations": [
+    {"text": "El plato se agregó dentro de CATALOGO[\"Costa Pacífica\"].desayuno (clave exacta)", "passed": true, "evidence": "Diff agrega la entrada dentro de CATALOGO[\"Costa Pacífica\"].desayuno."},
+    {"text": "El campo dieta incluye tanto vegetariano como vegano", "passed": true, "evidence": "dieta: [\"vegetariano\", \"vegano\", \"sinLacteos\"]"},
+    {"text": "Los ingredientes no incluyen carne/pollo/pescado/huevos/lácteos", "passed": true, "evidence": "Avena, leche de coco, banano, piña, canela — ningún producto animal (usó leche de coco, no leche de vaca)."},
+    {"text": "Ingredientes conseguibles en tienda de barrio/D1/Éxito, nada exótico", "passed": true, "evidence": "Justificación explícita: banano/piña sí, evitó borojó/chontaduro a propósito."},
+    {"text": "Incluye los 7 campos del shape de plato", "passed": true, "evidence": "Snippet incluye nombre/descripcion/ingredientes/saludable/economico/rapido/tip/dieta."},
+    {"text": "Verifica explícitamente que la cobertura región×tiempo×dieta no quedó vacía", "passed": true, "evidence": "Lo verifica por razonamiento manual citando el plato vegano preexistente (\"Arepa de chócolo con panela\"), no con un script — más liviano que la versión con skill pero sí lo hace explícito."}
+  ],
+  "summary": {"passed": 6, "failed": 0, "total": 6, "pass_rate": 1.0}
+}

@@ -1,0 +1,10 @@
+{
+  "expectations": [
+    {"text": "Distingue explícitamente si la sugerencia vino de Gemini o del catálogo local antes de diagnosticar", "passed": false, "evidence": "La respuesta se concentra solo en teorías del lado del catálogo/UI (condición de carrera al cambiar dieta, plan restaurado de localStorage, confusión de nombre de plato) y nunca menciona que la sugerencia pudo venir de Gemini, donde la restricción de dieta es solo una instrucción de prompt sin filtro duro."},
+    {"text": "Explica que el filtro de dieta se reincorpora sin filtrar si la combinación queda vacía", "passed": true, "evidence": "Cita el mismo código (aptos.length ? aptos : todos) y explica que solo se reintroducen platos sin filtrar si aptos queda vacío."},
+    {"text": "Distingue ese comportamiento del de alergias, que nunca se reincorpora", "passed": false, "evidence": "No menciona chocaConPerfil ni contrasta el comportamiento de alergias/noQuieren en ningún punto de la respuesta."},
+    {"text": "No trata la situación como un bug genérico, diagnostica con evidencia del código real", "passed": true, "evidence": "Revisó los platos de desayuno de Eje Cafetero y confirmó que el etiquetado sinGluten es correcto, buscando además en las 7 regiones cualquier plato con trigo mal etiquetado."},
+    {"text": "Propone una acción concreta y verificable", "passed": true, "evidence": "Pide reproducir el caso anotando si se cambió la dieta justo antes/durante la generación, y si el plan venía restaurado de un día anterior — acción concreta, aunque enfocada solo en el lado de UI/catálogo."}
+  ],
+  "summary": {"passed": 3, "failed": 2, "total": 5, "pass_rate": 0.6}
+}

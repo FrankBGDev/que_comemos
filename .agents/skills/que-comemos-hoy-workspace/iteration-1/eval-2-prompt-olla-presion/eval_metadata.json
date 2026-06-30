@@ -1,0 +1,13 @@
+{
+  "eval_id": 2,
+  "eval_name": "prompt-olla-presion",
+  "prompt": "Quiero que la receta completa que genera Gemini evite mencionar ollas a presión como utensilio, porque mi familia no tiene una en casa. Ajusta el prompt correspondiente en el backend.",
+  "assertions": [
+    "El cambio está en buildRecetaPrompt dentro de backend/src/index.js",
+    "Se agregó una instrucción que evita explícitamente la olla a presión, no solo una nota ambigua",
+    "El cambio sigue el patrón existente de texto condicional concatenado (similar a alergiaTexto), no reescribe todo el prompt desde cero",
+    "El ejemplo de JSON dentro del prompt sigue intacto (mismos campos: tiempo_total, porciones, dificultad, ingredientes, utensilios, pasos, valor_nutricional)",
+    "La instrucción existente de máximo 6 pasos en pasos no se eliminó ni se contradice",
+    "No se modificó thinkingConfig/responseMimeType en callGemini"
+  ]
+}

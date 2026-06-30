@@ -1,0 +1,11 @@
+{
+  "expectations": [
+    {"text": "El cambio está en buildRecetaPrompt en backend/src/index.js", "passed": true, "evidence": "Diff modifica buildRecetaPrompt agregando const utensiliosTexto."},
+    {"text": "Instrucción explícita que evita la olla a presión", "passed": true, "evidence": "\"RESTRICCIÓN DE UTENSILIOS (obligatoria): no asumas que la familia tiene olla a presión...\""},
+    {"text": "Sigue el patrón existente de texto condicional concatenado (como alergiaTexto)", "passed": true, "evidence": "Crea utensiliosTexto como variable y la concatena con ${alergiaTexto}${utensiliosTexto} en el template, igual que el resto de variables de texto del archivo."},
+    {"text": "El ejemplo de JSON sigue intacto", "passed": true, "evidence": "El diff inserta antes de la línea \"Responde ÚNICAMENTE...\"; el bloque de ejemplo no se tocó."},
+    {"text": "La instrucción de máximo 6 pasos no se eliminó ni se contradice", "passed": true, "evidence": "El diff solo toca la zona cercana a alergiaTexto (líneas 76-83); la frase de máximo 6 pasos vive más abajo en el prompt y no aparece en el diff, por lo que quedó intacta."},
+    {"text": "No se modificó thinkingConfig/responseMimeType en callGemini", "passed": true, "evidence": "change.md confirma explícitamente que no se tocó callGemini ni su thinkingConfig."}
+  ],
+  "summary": {"passed": 6, "failed": 0, "total": 6, "pass_rate": 1.0}
+}

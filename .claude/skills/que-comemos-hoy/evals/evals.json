@@ -1,0 +1,23 @@
+{
+  "skill_name": "que-comemos-hoy",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Agrega un plato de desayuno vegano para la región Costa Pacífica en el CATALOGO de App.jsx, algo con frutas tropicales y que se pueda comprar en una tienda de barrio o en D1, nada exótico.",
+      "expected_output": "Agrega una entrada nueva dentro de CATALOGO[\"Costa Pacífica\"].desayuno con los campos nombre/descripcion/ingredientes/saludable/economico/rapido/tip, y dieta: [\"vegetariano\", \"vegano\"] (ambos tags, porque vegano implica vegetariano). Los ingredientes deben ser conseguibles en tienda de barrio/D1/Éxito. Idealmente verifica o menciona que la combinación región×tiempo×dieta sigue teniendo cobertura.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Quiero que la receta completa que genera Gemini evite mencionar ollas a presión como utensilio, porque mi familia no tiene una en casa. Ajusta el prompt correspondiente en el backend.",
+      "expected_output": "Modifica buildRecetaPrompt en backend/src/index.js agregando una instrucción que evite ollas a presión, siguiendo el patrón existente de texto concatenado condicionalmente (como alergiaTexto), sin romper la estructura del JSON de ejemplo ni la instrucción existente de máximo 6 pasos, y sin tocar thinkingConfig/responseMimeType en callGemini.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Configuré la dieta en \"Sin gluten\" y, cuando no hay internet (modo sin conexión), la app me sigue sugiriendo a veces una arepa de maíz pelao en la región Eje Cafetero que en teoría no debería chocar, pero otras veces me sale algo con harina de trigo. ¿Es un bug?",
+      "expected_output": "Explica que la sugerencia viene del catálogo local (pickFromCatalogo, marcado _local/fallback) y que el filtro de dieta SÍ se reincorpora silenciosamente (usa la lista sin filtrar) cuando la combinación región×tiempo×dieta no tiene ningún plato candidato — no es necesariamente un bug de código sino una falta de cobertura en CATALOGO[\"Eje Cafetero\"] para sinGluten en ese tiempo. Debe distinguir esto de la lógica de alergias (que nunca se reincorpora) y proponer revisar/agregar platos sinGluten para esa región+tiempo en vez de buscar el error en otro lado.",
+      "files": []
+    }
+  ]
+}

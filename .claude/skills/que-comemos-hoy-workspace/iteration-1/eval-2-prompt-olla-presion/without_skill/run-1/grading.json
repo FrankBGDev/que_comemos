@@ -1,0 +1,11 @@
+{
+  "expectations": [
+    {"text": "El cambio está en buildRecetaPrompt en backend/src/index.js", "passed": true, "evidence": "Diff agrega una línea dentro del template literal que retorna buildRecetaPrompt."},
+    {"text": "Instrucción explícita que evita la olla a presión", "passed": true, "evidence": "\"RESTRICCIÓN DE UTENSILIOS (obligatoria): la familia NO tiene olla a presión...\""},
+    {"text": "Sigue el patrón existente de texto condicional concatenado (como alergiaTexto)", "passed": false, "evidence": "Insertó la restricción como una línea literal fija dentro del template (después de ${alergiaTexto}), no como una variable de texto nombrada (ej. utensiliosTexto) concatenada — rompe la convención que usan alergiaTexto/dietaTexto/perfilTexto en el resto del archivo, dificultando que se vuelva condicional más adelante."},
+    {"text": "El ejemplo de JSON sigue intacto", "passed": true, "evidence": "El diff inserta antes de \"Responde ÚNICAMENTE...\"; no toca el bloque de ejemplo."},
+    {"text": "La instrucción de máximo 6 pasos no se eliminó ni se contradice", "passed": true, "evidence": "El diff no toca esa zona del prompt."},
+    {"text": "No se modificó thinkingConfig/responseMimeType en callGemini", "passed": true, "evidence": "El diff solo toca buildRecetaPrompt, no callGemini."}
+  ],
+  "summary": {"passed": 5, "failed": 1, "total": 6, "pass_rate": 0.8333}
+}

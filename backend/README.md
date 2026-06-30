@@ -46,7 +46,9 @@ El servidor queda disponible en `http://localhost:3001`.
     "tiempo": "20-40 min",
     "mercado": "Lo básico"
   },
-  "historial": ["Huevos pericos", "Arepas"],
+  "historial": [
+    { "nombre": "Huevos pericos", "tiempo": "desayuno", "fecha": "2026-06-25", "saludable": true }
+  ],
   "dia": "Lunes"
 }
 ```
@@ -55,7 +57,7 @@ El servidor queda disponible en `http://localhost:3001`.
 |-------|------|-----------|-------------|
 | `tiempo` | string | ✅ | `desayuno`, `almuerzo` o `cena` |
 | `contexto` | object | ✅ | Preferencias del usuario |
-| `historial` | string[] | ❌ | Nombres de comidas recientes a evitar |
+| `historial` | object[] | ❌ | Comidas recientes (multi-día) — se usan para evitar repetirlas y, si las últimas son mayormente poco saludables, sesgar la sugerencia hacia algo más liviano |
 | `dia` | string | ❌ | Día de la semana en español |
 
 **Respuesta exitosa (200):**

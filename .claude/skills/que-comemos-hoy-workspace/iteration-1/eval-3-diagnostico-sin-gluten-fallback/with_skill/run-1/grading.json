@@ -1,0 +1,10 @@
+{
+  "expectations": [
+    {"text": "Distingue explícitamente si la sugerencia vino de Gemini o del catálogo local antes de diagnosticar", "passed": true, "evidence": "Sección \"¿De dónde sale el aborrajado?\" propone explícitamente verificar el banner \"⚠ Sugerencia sin conexión\" para diferenciar catálogo (filtro duro) vs. Gemini (instrucción de prompt sin validación dura)."},
+    {"text": "Explica que el filtro de dieta se reincorpora sin filtrar si la combinación queda vacía", "passed": true, "evidence": "Cita literal del código (aptos.length ? aptos : todos) y la explica como \"la asimetría clave\"."},
+    {"text": "Distingue ese comportamiento del de alergias, que nunca se reincorpora", "passed": true, "evidence": "\"mejor mostrar algún plato que ninguno cuando la dieta es una preferencia, no una alergia\"."},
+    {"text": "No trata la situación como un bug genérico, diagnostica con evidencia del código real", "passed": true, "evidence": "Revisó los 9 platos de Eje Cafetero línea por línea y confirmó cobertura sinGluten completa en los 3 tiempos antes de concluir."},
+    {"text": "Propone una acción concreta y verificable", "passed": true, "evidence": "Da un criterio binario y verificable: revisar si la tarjeta mostraba el banner naranja de \"sin conexión\" la próxima vez que ocurra.", "notes": "La acción difiere de la asunción original del eval (agregar platos sinGluten) porque, al verificar, no existe vacío de cobertura real en Eje Cafetero — el agente se ajustó correctamente a la evidencia en vez de seguir una premisa falsa."}
+  ],
+  "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}
+}

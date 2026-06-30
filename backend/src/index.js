@@ -100,7 +100,8 @@ Responde ÚNICAMENTE con un JSON válido (sin texto extra, sin markdown) con est
     "Grasas": "12g"
   }
 }
-Los pasos deben ser claros, en orden y con el tiempo_minutos en 0 si es un paso instantáneo.`;
+Los pasos deben ser claros, en orden y con el tiempo_minutos en 0 si es un paso instantáneo.
+Usa MÁXIMO 6 pasos en total — agrupa sub-pasos pequeños en uno solo si es necesario, nunca generes más de 6.`;
 }
 
 // ── GEMINI ───────────────────────────────────────────────────────────────────

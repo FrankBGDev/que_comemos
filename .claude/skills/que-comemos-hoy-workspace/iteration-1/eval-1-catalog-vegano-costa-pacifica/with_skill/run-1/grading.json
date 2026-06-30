@@ -1,0 +1,11 @@
+{
+  "expectations": [
+    {"text": "El plato se agregó dentro de CATALOGO[\"Costa Pacífica\"].desayuno (clave exacta)", "passed": true, "evidence": "Diff agrega la entrada dentro de CATALOGO[\"Costa Pacífica\"].desayuno, sin tocar otras regiones."},
+    {"text": "El campo dieta incluye tanto vegetariano como vegano", "passed": true, "evidence": "dieta: [\"vegetariano\", \"vegano\", \"sinGluten\", \"sinLacteos\"]"},
+    {"text": "Los ingredientes no incluyen carne/pollo/pescado/huevos/lácteos", "passed": true, "evidence": "Banano, piña, papaya, coco rallado, limón — ningún producto animal."},
+    {"text": "Ingredientes conseguibles en tienda de barrio/D1/Éxito, nada exótico", "passed": true, "evidence": "change.md explica que evitó a propósito frutas más exóticas como chontaduro/borojó por pedido del usuario."},
+    {"text": "Incluye los 7 campos del shape de plato (nombre, descripcion, ingredientes, saludable, economico, rapido, tip, dieta)", "passed": true, "evidence": "Snippet del diff tiene los 8 campos (incluye dieta) con el mismo shape que el resto del catálogo."},
+    {"text": "Verifica explícitamente que la cobertura región×tiempo×dieta no quedó vacía", "passed": true, "evidence": "Corrió un script Node ad-hoc contando combinaciones vacías antes/después del cambio — verificación activa, no solo razonamiento."}
+  ],
+  "summary": {"passed": 6, "failed": 0, "total": 6, "pass_rate": 1.0}
+}

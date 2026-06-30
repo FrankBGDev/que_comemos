@@ -1,0 +1,12 @@
+{
+  "eval_id": 3,
+  "eval_name": "diagnostico-sin-gluten-fallback",
+  "prompt": "Configuré la dieta en \"Sin gluten\" y, cuando no hay internet (modo sin conexión), la app me sigue sugiriendo a veces una arepa de maíz pelao en la región Eje Cafetero que en teoría no debería chocar, pero otras veces me sale algo con harina de trigo. ¿Es un bug?",
+  "assertions": [
+    "Identifica que la sugerencia proviene del catálogo local (pickFromCatalogo / fallback sin conexión), no de Gemini",
+    "Explica que el filtro de dieta se reincorpora (usa la lista sin filtrar) si la combinación región×tiempo×dieta queda vacía tras filtrar",
+    "Distingue explícitamente este comportamiento del de alergias/noQuieren, que nunca se reincorpora",
+    "No lo trata como un bug de código sino como falta de cobertura de platos sinGluten para Eje Cafetero en ese tiempo",
+    "Propone una acción concreta (agregar/revisar platos con dieta sinGluten en esa región/tiempo) en vez de una respuesta genérica"
+  ]
+}

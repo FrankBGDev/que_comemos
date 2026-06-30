@@ -360,6 +360,7 @@ function RecipeModal({ meal, tiempo, onClose, onLoadReceta, loadingReceta }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className={`modal modal--${tiempo}`} onClick={e => e.stopPropagation()}>
+        <div className="modal__handle" />
         {/* Header */}
         <div className="modal__header">
           <div className="modal__header-top">
@@ -516,9 +517,9 @@ function MealCard({ tiempo, meal, loading, onGenerate, contexto, onVerReceta }) 
           <h3 className="meal-card__name">{meal.nombre}</h3>
           <p className="meal-card__desc">{meal.descripcion}</p>
           <div className="meal-card__tags">
-            {meal.saludable && <span className="tag tag--green">Saludable</span>}
-            {meal.economico && <span className="tag tag--gold">Económico</span>}
-            {meal.rapido && <span className="tag tag--blue">Rápido</span>}
+            {meal.saludable && <span className="tag tag--green">✓ Saludable</span>}
+            {meal.economico && <span className="tag tag--gold">$ Económico</span>}
+            {meal.rapido && <span className="tag tag--blue">⚡ Rápido</span>}
           </div>
           <div className="meal-card__ingredientes">
             <strong>Necesitas</strong>
@@ -976,7 +977,7 @@ export default function BogotaMealPlanner() {
   return (
     <div className="app">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Nunito:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Nunito:wght@400;500;600;700;800&display=swap');
 
         :root {
           /* Neutros cálidos */
@@ -986,31 +987,33 @@ export default function BogotaMealPlanner() {
           --cafe-soft: #8A7058;
           --line: rgba(63, 38, 22, 0.09);
 
-          /* Marca */
-          --terra: #C25B28;
-          --terra-d: #9A3D1C;
-          --amar: #E0922A;
-          --verde: #3A7D44;
-          --verde-d: #2C5E34;
-          --noche: #3E5C76;
-          --danger: #A23B2B;
+          /* Marca — saturados y directos, estilo app de delivery */
+          --terra: #EE4D1F;
+          --terra-d: #C2360E;
+          --amar: #FFA90E;
+          --amar-d: #DB7E00;
+          --verde: #1FA251;
+          --verde-d: #157A3C;
+          --noche: #2E4F7A;
+          --danger: #E0392A;
 
           /* Acentos por comida */
-          --acc-des: #D98521;  --acc-des-soft: #FBE8CF;
-          --acc-alm: #C25B28;  --acc-alm-soft: #F7E0D2;
-          --acc-cen: #3E5C76;  --acc-cen-soft: #DCE6EE;
+          --acc-des: #F2900F;  --acc-des-soft: #FCE5C4;
+          --acc-alm: #EE4D1F;  --acc-alm-soft: #FBDACE;
+          --acc-cen: #2E4F7A;  --acc-cen-soft: #DAE3EE;
 
-          /* Tags */
-          --tag-green-bg: rgba(58,125,68,0.12);   --tag-green-fg: #2C5E34;
-          --tag-gold-bg: rgba(224,146,42,0.16);   --tag-gold-fg: #9A5A12;
-          --tag-blue-bg: rgba(62,92,118,0.13);    --tag-blue-fg: #34506A;
+          /* Tags — relleno sólido, no pastel */
+          --tag-green-bg: var(--verde);  --tag-green-fg: #FFFFFF;
+          --tag-gold-bg: var(--amar);    --tag-gold-fg: #3F2616;
+          --tag-blue-bg: var(--noche);   --tag-blue-fg: #FFFFFF;
 
           /* Sombras y formas */
-          --sh-1: 0 1px 2px rgba(63,38,22,0.04), 0 6px 18px rgba(63,38,22,0.07);
-          --sh-2: 0 2px 6px rgba(63,38,22,0.06), 0 16px 34px rgba(63,38,22,0.12);
+          --sh-1: 0 2px 4px rgba(20,10,5,0.07), 0 8px 20px rgba(20,10,5,0.10);
+          --sh-2: 0 4px 10px rgba(20,10,5,0.11), 0 20px 40px rgba(20,10,5,0.18);
           --r-card: 22px;
           --r-md: 14px;
           --r-sm: 10px;
+          --r-pill: 999px;
           --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
         }
 
@@ -1052,11 +1055,11 @@ export default function BogotaMealPlanner() {
         }
         .header__row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
         .header__kicker { font-size: 11px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.78; margin-bottom: 6px; }
-        .header__title { font-family: 'Playfair Display', serif; font-weight: 800; font-size: 30px; line-height: 1.04; letter-spacing: -0.01em; }
+        .header__title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 30px; line-height: 1.04; letter-spacing: -0.02em; }
         .header__sub { margin-top: 14px; font-size: 13.5px; line-height: 1.45; max-width: 300px; opacity: 0.9; }
         .header__dia-wrap { text-align: right; flex-shrink: 0; padding-top: 4px; }
         .header__dia-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7; }
-        .header__dia { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 19px; margin-top: 2px; }
+        .header__dia { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 19px; margin-top: 2px; }
 
         /* ───────── CONFIG ───────── */
         .config-panel {
@@ -1070,17 +1073,17 @@ export default function BogotaMealPlanner() {
         }
         .config-panel__head { display: flex; align-items: center; gap: 9px; margin-bottom: 16px; }
         .config-panel__icon { width: 34px; height: 34px; border-radius: var(--r-sm); background: linear-gradient(135deg, #FBE8CF, #F6D2AE); display: flex; align-items: center; justify-content: center; font-size: 17px; }
-        .config-panel__title { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 16px; }
+        .config-panel__title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 16px; }
         .config-panel__hint { font-size: 11.5px; color: var(--cafe-soft); }
         .config-item { margin-bottom: 14px; }
         .config-item label { display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--cafe-soft); margin-bottom: 8px; }
         .config-options { display: flex; flex-wrap: wrap; gap: 8px; }
         .config-btn {
-          min-height: 40px; padding: 9px 14px; border-radius: var(--r-sm);
+          min-height: 42px; padding: 9px 16px; border-radius: var(--r-pill);
           border: 1.5px solid var(--line); background: var(--surface); color: var(--cafe-soft);
           font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 12.5px; cursor: pointer;
           display: inline-flex; align-items: center; gap: 5px;
-          transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+          transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s var(--ease-spring);
         }
         /* (hover: hover) evita el "hover pegado" en pantallas táctiles: sin mouse no hay
            mouseleave, así que un :hover sin esta condición se queda activo después del tap
@@ -1090,7 +1093,7 @@ export default function BogotaMealPlanner() {
         }
         .config-btn:active { transform: scale(0.95); }
         .config-btn:focus-visible { outline: 2px solid var(--terra); outline-offset: 1px; }
-        .config-btn--active, .config-btn--active:hover { background: var(--terra); border-color: var(--terra); color: #fff; box-shadow: 0 3px 9px rgba(194,91,40,0.28); }
+        .config-btn--active, .config-btn--active:hover { background: var(--terra); border-color: var(--terra); color: #fff; box-shadow: 0 4px 12px rgba(238,77,31,0.35); }
         .config-btn--active::before { content: '✓'; font-size: 11px; line-height: 1; }
 
         /* ───────── PERFIL FAMILIAR ───────── */
@@ -1106,15 +1109,23 @@ export default function BogotaMealPlanner() {
         .perfil-banner__actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
         .perfil-banner__btn { padding: 7px 12px; border: none; border-radius: 9px; background: var(--noche); color: #fff; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 11.5px; cursor: pointer; }
         .perfil-banner__close { width: 22px; height: 22px; border: none; background: none; color: var(--cafe-soft); font-size: 13px; cursor: pointer; line-height: 1; }
-        .perfil-link {
-          margin: 14px 16px 0; padding: 10px 14px; border-radius: 13px; align-self: flex-start;
-          border: 1.5px solid var(--line); background: var(--surface); color: var(--cafe-soft);
-          font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 12.5px; cursor: pointer;
+        .user-actions {
+          display: flex; align-items: center; gap: 10px; padding: 14px 16px 0;
         }
+        .user-actions > .perfil-banner { flex: 1; min-width: 0; margin: 0; }
+        .perfil-link {
+          flex: 1; padding: 11px 16px; border-radius: var(--r-pill);
+          border: 2px solid var(--terra); background: transparent; color: var(--terra);
+          font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px;
+          cursor: pointer; text-align: left;
+          transition: background 0.12s, color 0.12s, transform 0.1s;
+          -webkit-tap-highlight-color: transparent; user-select: none;
+        }
+        .perfil-link:active { background: var(--terra); color: #fff; transform: scale(0.97); }
 
         .perfil-screen { padding: 18px 16px 28px; animation: qch-up 0.35s ease both; }
         .perfil-screen__back { border: none; background: none; color: var(--terra); font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 14px; }
-        .perfil-screen__title { font-family: 'Playfair Display', serif; font-weight: 800; font-size: 24px; margin-bottom: 6px; }
+        .perfil-screen__title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 24px; letter-spacing: -0.01em; margin-bottom: 6px; }
         .perfil-screen__hint { font-size: 12.5px; color: var(--cafe-soft); margin-bottom: 20px; }
         .perfil-screen__body .config-item { margin-bottom: 20px; }
         .perfil-textarea {
@@ -1125,9 +1136,17 @@ export default function BogotaMealPlanner() {
         .perfil-textarea:focus-visible { outline: 2px solid var(--terra); outline-offset: 1px; }
         .perfil-screen__actions { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
         .logout-link {
-          margin: 10px 16px 0; align-self: flex-start; border: none; background: none;
-          color: var(--cafe-soft); font-family: 'Nunito', sans-serif; font-weight: 700;
-          font-size: 11.5px; cursor: pointer; text-decoration: underline;
+          flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end;
+          border: none; background: none; cursor: pointer; padding: 4px 0; gap: 2px;
+          -webkit-tap-highlight-color: transparent; user-select: none;
+        }
+        .logout-link__label {
+          font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 12px;
+          color: var(--danger); line-height: 1.2;
+        }
+        .logout-link__email {
+          font-family: 'Nunito', sans-serif; font-weight: 400; font-size: 10.5px;
+          color: var(--cafe-soft); line-height: 1.2;
         }
 
         /* ───────── AUTENTICACIÓN ───────── */
@@ -1142,7 +1161,7 @@ export default function BogotaMealPlanner() {
           border-radius: 20px; padding: 22px; box-shadow: var(--sh-2); text-align: left;
           display: flex; flex-direction: column; gap: 14px; animation: qch-up 0.4s ease both;
         }
-        .auth-card__title { font-family: 'Playfair Display', serif; font-weight: 800; font-size: 21px; margin-bottom: 2px; }
+        .auth-card__title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 21px; letter-spacing: -0.01em; margin-bottom: 2px; }
         .auth-input {
           width: 100%; padding: 11px 13px; border-radius: var(--r-sm); border: 1.5px solid var(--line);
           background: var(--surface); color: var(--cafe); font-family: 'Nunito', sans-serif; font-size: 13px;
@@ -1161,27 +1180,28 @@ export default function BogotaMealPlanner() {
 
         /* ───────── BOTONES ───────── */
         .btn {
-          width: 100%; border: none; border-radius: 13px; cursor: pointer;
-          font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px;
+          width: 100%; min-height: 50px; border: none; border-radius: var(--r-pill); cursor: pointer;
+          font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14.5px;
           display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-          transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+          transition: transform 0.15s var(--ease-spring), box-shadow 0.15s, filter 0.15s;
         }
         .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .btn:active:not(:disabled) { transform: scale(0.96); }
 
-        .btn--gold { padding: 15px; font-size: 15.5px; color: #fff; background: linear-gradient(135deg, var(--amar), #C2701B); box-shadow: 0 5px 16px rgba(224,146,42,0.4); }
-        .btn--gold:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.04); }
+        .btn--gold { padding: 15px; font-size: 16px; color: #fff; background: linear-gradient(135deg, var(--amar), var(--amar-d)); box-shadow: 0 6px 18px rgba(255,169,14,0.45); }
+        .btn--gold:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.04); box-shadow: 0 9px 22px rgba(255,169,14,0.5); }
 
-        .btn--primary { padding: 12px; color: #fff; background: var(--terra); box-shadow: 0 4px 12px rgba(63,38,22,0.14); }
-        .btn--primary:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.06); }
+        .btn--primary { padding: 13px; color: #fff; background: var(--terra); box-shadow: 0 5px 16px rgba(238,77,31,0.35); }
+        .btn--primary:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.06); box-shadow: 0 8px 20px rgba(238,77,31,0.4); }
 
-        .btn--recipe { padding: 12px; color: #fff; background: linear-gradient(135deg, var(--verde), var(--verde-d)); box-shadow: 0 4px 12px rgba(58,125,68,0.32); }
-        .btn--recipe:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }
+        .btn--recipe { padding: 13px; color: #fff; background: linear-gradient(135deg, var(--verde), var(--verde-d)); box-shadow: 0 5px 16px rgba(31,162,81,0.35); }
+        .btn--recipe:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.05); box-shadow: 0 8px 20px rgba(31,162,81,0.4); }
 
-        .btn--secondary { padding: 12px 14px; width: auto; font-weight: 700; font-size: 13px; color: var(--terra); background: var(--crema); border: 1.5px solid rgba(194,91,40,0.22); }
-        .btn--secondary:hover:not(:disabled) { background: rgba(194,91,40,0.07); border-color: var(--terra); }
+        .btn--secondary { padding: 13px 16px; min-height: 46px; width: auto; font-weight: 800; font-size: 13.5px; color: var(--terra); background: var(--crema); border: 1.5px solid rgba(238,77,31,0.25); }
+        .btn--secondary:hover:not(:disabled) { background: rgba(238,77,31,0.08); border-color: var(--terra); }
 
-        .btn--danger { padding: 11px; font-weight: 700; font-size: 13px; color: var(--danger); background: transparent; border: 1.5px solid rgba(162,59,43,0.28); }
-        .btn--danger:hover:not(:disabled) { background: rgba(162,59,43,0.06); border-color: var(--danger); }
+        .btn--danger { padding: 12px; min-height: 44px; font-weight: 800; font-size: 13.5px; color: var(--danger); background: transparent; border: 1.5px solid rgba(224,57,42,0.3); }
+        .btn--danger:hover:not(:disabled) { background: rgba(224,57,42,0.07); border-color: var(--danger); }
 
         /* ───────── CARDS ───────── */
         .cards-container { padding: 14px 16px 0; display: flex; flex-direction: column; gap: 14px; }
@@ -1189,6 +1209,10 @@ export default function BogotaMealPlanner() {
           background: var(--surface); border: 1px solid var(--line);
           border-radius: var(--r-card); overflow: hidden;
           box-shadow: var(--sh-1); animation: qch-up 0.45s ease both;
+          transition: transform 0.2s var(--ease-spring), box-shadow 0.2s ease;
+        }
+        @media (hover: hover) {
+          .meal-card:hover { transform: translateY(-3px); box-shadow: var(--sh-2); }
         }
         .meal-card--desayuno { --accent: var(--acc-des); --accent-soft: var(--acc-des-soft); }
         .meal-card--almuerzo { --accent: var(--acc-alm); --accent-soft: var(--acc-alm-soft); }
@@ -1200,7 +1224,7 @@ export default function BogotaMealPlanner() {
         }
         .meal-card__header::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--accent); }
         .meal-card__emoji { width: 40px; height: 40px; border-radius: 12px; background: var(--surface); box-shadow: 0 2px 6px rgba(63,38,22,0.10); display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        .meal-card__title { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 17px; line-height: 1; }
+        .meal-card__title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 17px; line-height: 1; }
         .meal-card__hora { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 0.03em; }
         .meal-card__sub { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--cafe-soft); opacity: 0.7; }
 
@@ -1209,11 +1233,11 @@ export default function BogotaMealPlanner() {
         .meal-card__empty .btn--primary { width: auto; padding: 11px 22px; background: var(--accent); }
 
         .meal-card__content { padding: 16px; }
-        .meal-card__name { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 21px; line-height: 1.12; margin-bottom: 6px; }
+        .meal-card__name { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 21px; line-height: 1.12; letter-spacing: -0.01em; margin-bottom: 6px; }
         .meal-card__desc { font-size: 13px; line-height: 1.5; color: var(--cafe-soft); margin-bottom: 12px; }
 
         .meal-card__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 13px; }
-        .tag { padding: 4px 10px; border-radius: 8px; font-size: 11.5px; font-weight: 800; }
+        .tag { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: var(--r-pill); font-size: 11.5px; font-weight: 800; box-shadow: 0 2px 6px rgba(20,10,5,0.12); }
         .tag--green { background: var(--tag-green-bg); color: var(--tag-green-fg); }
         .tag--gold  { background: var(--tag-gold-bg);  color: var(--tag-gold-fg); }
         .tag--blue  { background: var(--tag-blue-bg);  color: var(--tag-blue-fg); }
@@ -1252,6 +1276,7 @@ export default function BogotaMealPlanner() {
           background: var(--crema); border-radius: 26px 26px 0 0;
           animation: qch-slideup 0.34s var(--ease-spring);
         }
+        .modal__handle { width: 36px; height: 4px; border-radius: var(--r-pill); background: rgba(63,38,22,0.18); margin: 10px auto 0; }
         .modal--desayuno { --accent: var(--acc-des); --accent-soft: var(--acc-des-soft); }
         .modal--almuerzo { --accent: var(--acc-alm); --accent-soft: var(--acc-alm-soft); }
         .modal--cena     { --accent: var(--acc-cen); --accent-soft: var(--acc-cen-soft); }
@@ -1263,15 +1288,15 @@ export default function BogotaMealPlanner() {
         .modal__kicker { font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); }
         .modal__close { width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer; background: rgba(63,38,22,0.10); color: var(--cafe); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
         .modal__close:hover { background: rgba(63,38,22,0.18); }
-        .modal__title { font-family: 'Playfair Display', serif; font-weight: 800; font-size: 25px; line-height: 1.08; margin-bottom: 6px; }
+        .modal__title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 25px; line-height: 1.08; letter-spacing: -0.01em; margin-bottom: 6px; }
         .modal__desc { font-size: 13px; line-height: 1.45; color: var(--cafe-soft); margin-bottom: 12px; }
         .modal__meta { display: flex; gap: 7px; flex-wrap: wrap; }
-        .modal__meta span { background: var(--surface); border-radius: 9px; padding: 6px 11px; font-size: 12px; font-weight: 700; box-shadow: 0 1px 3px rgba(63,38,22,0.06); }
+        .modal__meta span { background: var(--surface); border-radius: var(--r-pill); padding: 6px 13px; font-size: 12px; font-weight: 800; box-shadow: 0 2px 6px rgba(20,10,5,0.10); }
         .modal__body { padding: 18px; }
 
         /* Secciones de receta */
         .recipe-section { margin-bottom: 22px; }
-        .recipe-section__title { display: flex; align-items: center; gap: 8px; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 16px; color: var(--terra); margin-bottom: 12px; }
+        .recipe-section__title { display: flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 16px; color: var(--terra); margin-bottom: 12px; }
         .recipe-section__title i { width: 22px; height: 22px; border-radius: 7px; background: var(--accent-soft); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-style: normal; }
 
         /* Ingredientes en tabla rayada */
@@ -1299,7 +1324,7 @@ export default function BogotaMealPlanner() {
         .timer-start:hover { background: var(--terra); color: #fff; }
         .timer-display { background: var(--surface); border: 1px solid var(--line); border-radius: 13px; padding: 11px 13px; box-shadow: var(--sh-1); }
         .timer-display__top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
-        .timer-count { font-family: 'Playfair Display', serif; font-weight: 800; font-size: 26px; letter-spacing: 0.01em; color: var(--terra); }
+        .timer-count { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 26px; letter-spacing: 0.01em; color: var(--terra); }
         .timer-count--done { color: var(--verde); }
         .timer-actions { display: flex; gap: 7px; }
         .timer-btn { padding: 7px 12px; border: 1.5px solid var(--line); background: var(--crema); color: var(--cafe); border-radius: 9px; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 12px; }
@@ -1311,7 +1336,7 @@ export default function BogotaMealPlanner() {
         /* Nutrición */
         .nutri-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .nutri-item { background: var(--surface); border: 1px solid var(--line); border-radius: 13px; padding: 11px 6px; text-align: center; box-shadow: var(--sh-1); }
-        .nutri-item__val { display: block; font-family: 'Playfair Display', serif; font-weight: 800; font-size: 15px; color: var(--terra); line-height: 1; }
+        .nutri-item__val { display: block; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 15px; color: var(--terra); line-height: 1; }
         .nutri-item__key { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--cafe-soft); margin-top: 5px; }
 
         .footer-note { text-align: center; font-size: 11px; color: var(--cafe-soft); opacity: 0.7; padding: 24px 30px 4px; line-height: 1.6; }
@@ -1350,29 +1375,31 @@ export default function BogotaMealPlanner() {
         <p className="header__sub">Menú del día pensado para tu familia — fresco, rendidor y con sabor de casa.</p>
       </div>
 
-      {perfil._completado || perfil._descartado ? (
-        <button className="perfil-link" onClick={() => setVista("perfil")}>
-          👤 {perfil._completado ? "Editar perfil familiar" : "Completar perfil familiar"}
-        </button>
-      ) : (
-        <div className="perfil-banner">
-          <span className="perfil-banner__icon">📋</span>
-          <div className="perfil-banner__text">
-            <strong>Completa el perfil de tu familia</strong>
-            <span>Alergias, niños en casa y tus prioridades — para sugerencias más precisas.</span>
+      <div className="user-actions">
+        {perfil._completado || perfil._descartado ? (
+          <button className="perfil-link" onClick={() => setVista("perfil")}>
+            👤 {perfil._completado ? "Editar perfil familiar" : "Completar perfil familiar"}
+          </button>
+        ) : (
+          <div className="perfil-banner">
+            <span className="perfil-banner__icon">📋</span>
+            <div className="perfil-banner__text">
+              <strong>Completa el perfil de tu familia</strong>
+              <span>Alergias, niños en casa y tus prioridades — para sugerencias más precisas.</span>
+            </div>
+            <div className="perfil-banner__actions">
+              <button className="perfil-banner__btn" onClick={() => setVista("perfil")}>Completar</button>
+              <button className="perfil-banner__close" onClick={() => setPerfil(p => ({ ...p, _descartado: true }))} aria-label="Descartar">✕</button>
+            </div>
           </div>
-          <div className="perfil-banner__actions">
-            <button className="perfil-banner__btn" onClick={() => setVista("perfil")}>Completar</button>
-            <button className="perfil-banner__close" onClick={() => setPerfil(p => ({ ...p, _descartado: true }))} aria-label="Descartar">✕</button>
-          </div>
-        </div>
-      )}
-
-      {supabaseConfigured && session && (
-        <button className="logout-link" onClick={cerrarSesion}>
-          Cerrar sesión ({session.user.email})
-        </button>
-      )}
+        )}
+        {supabaseConfigured && session && (
+          <button className="logout-link" onClick={cerrarSesion}>
+            <span className="logout-link__label">Cerrar sesión</span>
+            <span className="logout-link__email">{session.user.email.split('@')[0]}</span>
+          </button>
+        )}
+      </div>
 
       {showConfig && (
         <div className="config-panel">

@@ -3,7 +3,19 @@
     "allow": [
       "Bash(node --check backend/src/index.js)",
       "Bash(node -e \"require\\('dotenv'\\).config\\(\\); console.log\\('KEY set:', !!process.env.ANTHROPIC_API_KEY, 'len:', \\(process.env.ANTHROPIC_API_KEY||''\\).length\\)\")",
-      "Bash(curl -s -X POST http://localhost:3001/api/sugerir-comida -H \"Content-Type: application/json\" -d '{\"tiempo\":\"desayuno\",\"contexto\":{\"personas\":\"2 personas\",\"tiempo\":\"20-40 min\",\"mercado\":\"Lo básico\"},\"historial\":[],\"dia\":\"Jueves\"}')"
+      "Bash(curl -s -X POST http://localhost:3001/api/sugerir-comida -H \"Content-Type: application/json\" -d '{\"tiempo\":\"desayuno\",\"contexto\":{\"personas\":\"2 personas\",\"tiempo\":\"20-40 min\",\"mercado\":\"Lo básico\"},\"historial\":[],\"dia\":\"Jueves\"}')",
+      "Edit(~/.claude/skills/architect-review/**)",
+      "Bash(git commit -m ' *)",
+      "Bash(node -e ' *)",
+      "Bash(node .tmp-test-perfil.cjs)",
+      "Bash(git add *)",
+      "Bash(cd \"/c/Users/frank/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator\" && sed -n '80,200p' scripts/aggregate_benchmark.py 2>&1)",
+      "Read(//c/Users/frank/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator/**)",
+      "Read(//c/Users/frank/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator/references/**)",
+      "Edit(/.claude/skills/que-comemos-hoy-workspace/**)",
+      "Bash(cd \"/c/Users/frank/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator\" && grep -n \"port\" eval-viewer/generate_review.py | head -30)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3117 --max-time 3)",
+      "Bash(cmd.exe /c start http://localhost:3117)"
     ]
   }
 }

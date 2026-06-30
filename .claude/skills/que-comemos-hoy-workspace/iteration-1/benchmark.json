@@ -1,0 +1,344 @@
+{
+  "metadata": {
+    "skill_name": "que-comemos-hoy",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-06-29T22:22:34Z",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 97.5,
+        "tokens": 63403,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "El plato se agreg\u00c3\u00b3 dentro de CATALOGO[\"Costa Pac\u00c3\u00adfica\"].desayuno (clave exacta)",
+          "passed": true,
+          "evidence": "Diff agrega la entrada dentro de CATALOGO[\"Costa Pac\u00c3\u00adfica\"].desayuno, sin tocar otras regiones."
+        },
+        {
+          "text": "El campo dieta incluye tanto vegetariano como vegano",
+          "passed": true,
+          "evidence": "dieta: [\"vegetariano\", \"vegano\", \"sinGluten\", \"sinLacteos\"]"
+        },
+        {
+          "text": "Los ingredientes no incluyen carne/pollo/pescado/huevos/l\u00c3\u00a1cteos",
+          "passed": true,
+          "evidence": "Banano, pi\u00c3\u00b1a, papaya, coco rallado, lim\u00c3\u00b3n \u00e2\u20ac\u201d ning\u00c3\u00ban producto animal."
+        },
+        {
+          "text": "Ingredientes conseguibles en tienda de barrio/D1/\u00c3\u2030xito, nada ex\u00c3\u00b3tico",
+          "passed": true,
+          "evidence": "change.md explica que evit\u00c3\u00b3 a prop\u00c3\u00b3sito frutas m\u00c3\u00a1s ex\u00c3\u00b3ticas como chontaduro/boroj\u00c3\u00b3 por pedido del usuario."
+        },
+        {
+          "text": "Incluye los 7 campos del shape de plato (nombre, descripcion, ingredientes, saludable, economico, rapido, tip, dieta)",
+          "passed": true,
+          "evidence": "Snippet del diff tiene los 8 campos (incluye dieta) con el mismo shape que el resto del cat\u00c3\u00a1logo."
+        },
+        {
+          "text": "Verifica expl\u00c3\u00adcitamente que la cobertura regi\u00c3\u00b3n\u00c3\u2014tiempo\u00c3\u2014dieta no qued\u00c3\u00b3 vac\u00c3\u00ada",
+          "passed": true,
+          "evidence": "Corri\u00c3\u00b3 un script Node ad-hoc contando combinaciones vac\u00c3\u00adas antes/despu\u00c3\u00a9s del cambio \u00e2\u20ac\u201d verificaci\u00c3\u00b3n activa, no solo razonamiento."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 107.9,
+        "tokens": 48895,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "El cambio est\u00c3\u00a1 en buildRecetaPrompt en backend/src/index.js",
+          "passed": true,
+          "evidence": "Diff modifica buildRecetaPrompt agregando const utensiliosTexto."
+        },
+        {
+          "text": "Instrucci\u00c3\u00b3n expl\u00c3\u00adcita que evita la olla a presi\u00c3\u00b3n",
+          "passed": true,
+          "evidence": "\"RESTRICCI\u00c3\u201cN DE UTENSILIOS (obligatoria): no asumas que la familia tiene olla a presi\u00c3\u00b3n...\""
+        },
+        {
+          "text": "Sigue el patr\u00c3\u00b3n existente de texto condicional concatenado (como alergiaTexto)",
+          "passed": true,
+          "evidence": "Crea utensiliosTexto como variable y la concatena con ${alergiaTexto}${utensiliosTexto} en el template, igual que el resto de variables de texto del archivo."
+        },
+        {
+          "text": "El ejemplo de JSON sigue intacto",
+          "passed": true,
+          "evidence": "El diff inserta antes de la l\u00c3\u00adnea \"Responde \u00c3\u0161NICAMENTE...\"; el bloque de ejemplo no se toc\u00c3\u00b3."
+        },
+        {
+          "text": "La instrucci\u00c3\u00b3n de m\u00c3\u00a1ximo 6 pasos no se elimin\u00c3\u00b3 ni se contradice",
+          "passed": true,
+          "evidence": "El diff solo toca la zona cercana a alergiaTexto (l\u00c3\u00adneas 76-83); la frase de m\u00c3\u00a1ximo 6 pasos vive m\u00c3\u00a1s abajo en el prompt y no aparece en el diff, por lo que qued\u00c3\u00b3 intacta."
+        },
+        {
+          "text": "No se modific\u00c3\u00b3 thinkingConfig/responseMimeType en callGemini",
+          "passed": true,
+          "evidence": "change.md confirma expl\u00c3\u00adcitamente que no se toc\u00c3\u00b3 callGemini ni su thinkingConfig."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 122.4,
+        "tokens": 69121,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Distingue expl\u00c3\u00adcitamente si la sugerencia vino de Gemini o del cat\u00c3\u00a1logo local antes de diagnosticar",
+          "passed": true,
+          "evidence": "Secci\u00c3\u00b3n \"\u00c2\u00bfDe d\u00c3\u00b3nde sale el aborrajado?\" propone expl\u00c3\u00adcitamente verificar el banner \"\u00e2\u0161\u00a0 Sugerencia sin conexi\u00c3\u00b3n\" para diferenciar cat\u00c3\u00a1logo (filtro duro) vs. Gemini (instrucci\u00c3\u00b3n de prompt sin validaci\u00c3\u00b3n dura)."
+        },
+        {
+          "text": "Explica que el filtro de dieta se reincorpora sin filtrar si la combinaci\u00c3\u00b3n queda vac\u00c3\u00ada",
+          "passed": true,
+          "evidence": "Cita literal del c\u00c3\u00b3digo (aptos.length ? aptos : todos) y la explica como \"la asimetr\u00c3\u00ada clave\"."
+        },
+        {
+          "text": "Distingue ese comportamiento del de alergias, que nunca se reincorpora",
+          "passed": true,
+          "evidence": "\"mejor mostrar alg\u00c3\u00ban plato que ninguno cuando la dieta es una preferencia, no una alergia\"."
+        },
+        {
+          "text": "No trata la situaci\u00c3\u00b3n como un bug gen\u00c3\u00a9rico, diagnostica con evidencia del c\u00c3\u00b3digo real",
+          "passed": true,
+          "evidence": "Revis\u00c3\u00b3 los 9 platos de Eje Cafetero l\u00c3\u00adnea por l\u00c3\u00adnea y confirm\u00c3\u00b3 cobertura sinGluten completa en los 3 tiempos antes de concluir."
+        },
+        {
+          "text": "Propone una acci\u00c3\u00b3n concreta y verificable",
+          "passed": true,
+          "evidence": "Da un criterio binario y verificable: revisar si la tarjeta mostraba el banner naranja de \"sin conexi\u00c3\u00b3n\" la pr\u00c3\u00b3xima vez que ocurra.",
+          "notes": "La acci\u00c3\u00b3n difiere de la asunci\u00c3\u00b3n original del eval (agregar platos sinGluten) porque, al verificar, no existe vac\u00c3\u00ado de cobertura real en Eje Cafetero \u00e2\u20ac\u201d el agente se ajust\u00c3\u00b3 correctamente a la evidencia en vez de seguir una premisa falsa."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 56.0,
+        "tokens": 40597,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "El plato se agreg\u00c3\u00b3 dentro de CATALOGO[\"Costa Pac\u00c3\u00adfica\"].desayuno (clave exacta)",
+          "passed": true,
+          "evidence": "Diff agrega la entrada dentro de CATALOGO[\"Costa Pac\u00c3\u00adfica\"].desayuno."
+        },
+        {
+          "text": "El campo dieta incluye tanto vegetariano como vegano",
+          "passed": true,
+          "evidence": "dieta: [\"vegetariano\", \"vegano\", \"sinLacteos\"]"
+        },
+        {
+          "text": "Los ingredientes no incluyen carne/pollo/pescado/huevos/l\u00c3\u00a1cteos",
+          "passed": true,
+          "evidence": "Avena, leche de coco, banano, pi\u00c3\u00b1a, canela \u00e2\u20ac\u201d ning\u00c3\u00ban producto animal (us\u00c3\u00b3 leche de coco, no leche de vaca)."
+        },
+        {
+          "text": "Ingredientes conseguibles en tienda de barrio/D1/\u00c3\u2030xito, nada ex\u00c3\u00b3tico",
+          "passed": true,
+          "evidence": "Justificaci\u00c3\u00b3n expl\u00c3\u00adcita: banano/pi\u00c3\u00b1a s\u00c3\u00ad, evit\u00c3\u00b3 boroj\u00c3\u00b3/chontaduro a prop\u00c3\u00b3sito."
+        },
+        {
+          "text": "Incluye los 7 campos del shape de plato",
+          "passed": true,
+          "evidence": "Snippet incluye nombre/descripcion/ingredientes/saludable/economico/rapido/tip/dieta."
+        },
+        {
+          "text": "Verifica expl\u00c3\u00adcitamente que la cobertura regi\u00c3\u00b3n\u00c3\u2014tiempo\u00c3\u2014dieta no qued\u00c3\u00b3 vac\u00c3\u00ada",
+          "passed": true,
+          "evidence": "Lo verifica por razonamiento manual citando el plato vegano preexistente (\"Arepa de ch\u00c3\u00b3colo con panela\"), no con un script \u00e2\u20ac\u201d m\u00c3\u00a1s liviano que la versi\u00c3\u00b3n con skill pero s\u00c3\u00ad lo hace expl\u00c3\u00adcito."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8333,
+        "passed": 5,
+        "failed": 1,
+        "total": 6,
+        "time_seconds": 60.6,
+        "tokens": 38499,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "El cambio est\u00c3\u00a1 en buildRecetaPrompt en backend/src/index.js",
+          "passed": true,
+          "evidence": "Diff agrega una l\u00c3\u00adnea dentro del template literal que retorna buildRecetaPrompt."
+        },
+        {
+          "text": "Instrucci\u00c3\u00b3n expl\u00c3\u00adcita que evita la olla a presi\u00c3\u00b3n",
+          "passed": true,
+          "evidence": "\"RESTRICCI\u00c3\u201cN DE UTENSILIOS (obligatoria): la familia NO tiene olla a presi\u00c3\u00b3n...\""
+        },
+        {
+          "text": "Sigue el patr\u00c3\u00b3n existente de texto condicional concatenado (como alergiaTexto)",
+          "passed": false,
+          "evidence": "Insert\u00c3\u00b3 la restricci\u00c3\u00b3n como una l\u00c3\u00adnea literal fija dentro del template (despu\u00c3\u00a9s de ${alergiaTexto}), no como una variable de texto nombrada (ej. utensiliosTexto) concatenada \u00e2\u20ac\u201d rompe la convenci\u00c3\u00b3n que usan alergiaTexto/dietaTexto/perfilTexto en el resto del archivo, dificultando que se vuelva condicional m\u00c3\u00a1s adelante."
+        },
+        {
+          "text": "El ejemplo de JSON sigue intacto",
+          "passed": true,
+          "evidence": "El diff inserta antes de \"Responde \u00c3\u0161NICAMENTE...\"; no toca el bloque de ejemplo."
+        },
+        {
+          "text": "La instrucci\u00c3\u00b3n de m\u00c3\u00a1ximo 6 pasos no se elimin\u00c3\u00b3 ni se contradice",
+          "passed": true,
+          "evidence": "El diff no toca esa zona del prompt."
+        },
+        {
+          "text": "No se modific\u00c3\u00b3 thinkingConfig/responseMimeType en callGemini",
+          "passed": true,
+          "evidence": "El diff solo toca buildRecetaPrompt, no callGemini."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 120.7,
+        "tokens": 60618,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Distingue expl\u00c3\u00adcitamente si la sugerencia vino de Gemini o del cat\u00c3\u00a1logo local antes de diagnosticar",
+          "passed": false,
+          "evidence": "La respuesta se concentra solo en teor\u00c3\u00adas del lado del cat\u00c3\u00a1logo/UI (condici\u00c3\u00b3n de carrera al cambiar dieta, plan restaurado de localStorage, confusi\u00c3\u00b3n de nombre de plato) y nunca menciona que la sugerencia pudo venir de Gemini, donde la restricci\u00c3\u00b3n de dieta es solo una instrucci\u00c3\u00b3n de prompt sin filtro duro."
+        },
+        {
+          "text": "Explica que el filtro de dieta se reincorpora sin filtrar si la combinaci\u00c3\u00b3n queda vac\u00c3\u00ada",
+          "passed": true,
+          "evidence": "Cita el mismo c\u00c3\u00b3digo (aptos.length ? aptos : todos) y explica que solo se reintroducen platos sin filtrar si aptos queda vac\u00c3\u00ado."
+        },
+        {
+          "text": "Distingue ese comportamiento del de alergias, que nunca se reincorpora",
+          "passed": false,
+          "evidence": "No menciona chocaConPerfil ni contrasta el comportamiento de alergias/noQuieren en ning\u00c3\u00ban punto de la respuesta."
+        },
+        {
+          "text": "No trata la situaci\u00c3\u00b3n como un bug gen\u00c3\u00a9rico, diagnostica con evidencia del c\u00c3\u00b3digo real",
+          "passed": true,
+          "evidence": "Revis\u00c3\u00b3 los platos de desayuno de Eje Cafetero y confirm\u00c3\u00b3 que el etiquetado sinGluten es correcto, buscando adem\u00c3\u00a1s en las 7 regiones cualquier plato con trigo mal etiquetado."
+        },
+        {
+          "text": "Propone una acci\u00c3\u00b3n concreta y verificable",
+          "passed": true,
+          "evidence": "Pide reproducir el caso anotando si se cambi\u00c3\u00b3 la dieta justo antes/durante la generaci\u00c3\u00b3n, y si el plan ven\u00c3\u00ada restaurado de un d\u00c3\u00ada anterior \u00e2\u20ac\u201d acci\u00c3\u00b3n concreta, aunque enfocada solo en el lado de UI/cat\u00c3\u00a1logo."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 109.2667,
+        "stddev": 12.5061,
+        "min": 97.5,
+        "max": 122.4
+      },
+      "tokens": {
+        "mean": 60473.0,
+        "stddev": 10426.478,
+        "min": 48895,
+        "max": 69121
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.8111,
+        "stddev": 0.2009,
+        "min": 0.6,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 79.1,
+        "stddev": 36.1,
+        "min": 56.0,
+        "max": 120.7
+      },
+      "tokens": {
+        "mean": 46571.3333,
+        "stddev": 12209.9154,
+        "min": 38499,
+        "max": 60618
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.19",
+      "time_seconds": "+30.2",
+      "tokens": "+13902"
+    }
+  },
+  "notes": []
+}

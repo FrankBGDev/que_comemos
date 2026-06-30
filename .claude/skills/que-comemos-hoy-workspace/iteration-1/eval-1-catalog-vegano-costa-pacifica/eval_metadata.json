@@ -1,0 +1,13 @@
+{
+  "eval_id": 1,
+  "eval_name": "catalog-vegano-costa-pacifica",
+  "prompt": "Agrega un plato de desayuno vegano para la región Costa Pacífica en el CATALOGO de App.jsx, algo con frutas tropicales y que se pueda comprar en una tienda de barrio o en D1, nada exótico.",
+  "assertions": [
+    "El plato se agregó dentro de CATALOGO[\"Costa Pacífica\"].desayuno (clave de región exacta, con tilde)",
+    "El campo dieta del plato incluye tanto \"vegetariano\" como \"vegano\" (no solo uno de los dos)",
+    "Los ingredientes listados no incluyen carne, pollo, pescado, huevos ni lácteos (coherente con vegano)",
+    "Los ingredientes son conseguibles en tienda de barrio/D1/Éxito (no exóticos/importados)",
+    "El plato incluye los campos nombre, descripcion, ingredientes, saludable, economico, rapido, tip",
+    "La respuesta menciona o verifica explícitamente que la cobertura región×tiempo×dieta no quedó vacía"
+  ]
+}
