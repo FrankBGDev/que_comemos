@@ -32,16 +32,26 @@ app.use(
 );
 
 // ── RATE LIMITING ────────────────────────────────────────────────────────────
+// Rutas de IA (Gemini): límite conservador por costo.
 app.use(
-  "/api/",
+  ["/api/sugerir-comida", "/api/receta-completa"],
   rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hora
-    max: 30,
+    windowMs: 60 * 60 * 1000,
+    max: 40,
     standardHeaders: true,
     legacyHeaders: false,
-    message: {
-      error: "Demasiadas solicitudes. Por favor espera un momento antes de intentar de nuevo.",
-    },
+    message: { error: "Demasiadas solicitudes. Por favor espera un momento antes de intentar de nuevo." },
+  })
+);
+// Imágenes: límite más alto (no consume Gemini).
+app.use(
+  "/api/buscar-imagen",
+  rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Demasiadas solicitudes de imágenes. Intenta más tarde." },
   })
 );
 
@@ -65,10 +75,11 @@ function buildContextPrompt(region) {
   return `Eres un asistente culinario para familias de estrato medio en ${r.lugar}.
 Conoces muy bien la cocina típica de la zona: ${r.platos}, etc.
 Las familias tienen presupuesto moderado, compran en tiendas de barrio y supermercados como Éxito o D1.
-Sugiere comidas balanceadas, sabrosas y económicas. Siempre responde en español colombiano natural.
-Cuando sea posible sin perder el sabor local, inclina tus sugerencias hacia principios de las "zonas azules"
-(regiones con más centenarios del mundo, como Cerdeña, Okinawa e Icaria): más vegetales y leguminosas,
-porciones moderadas, proteínas variadas y menos fritos o ultraprocesados — sin dejar de ser comida típica de la región.`;
+Sugiere comidas auténticas, sabrosas y económicas de la región. Siempre responde en español colombiano natural.
+Respeta los platos tal como son — una lechona es una lechona, un calentado es un calentado.
+No agregues guarniciones, ensaladas ni acompañamientos que no sean propios del plato o de la tradición regional.
+Si el contexto lo permite (familia que quiere comer sano, nevera bien surtida), puedes incluir opciones
+más livianas dentro de la cocina típica (sopas, caldos, sancochos, leguminosas) — sin imponer saludable donde no va.`;
 }
 
 function buildRecetaPrompt({ nombre, personas, region, perfil }) {
@@ -188,7 +199,7 @@ function buildPrompt({ tiempo, contexto, historial = [], dia = "", perfil = null
   const noSaludables = recientes.filter((h) => h.saludable === false).length;
   const balanceTexto =
     recientes.length >= 3 && noSaludables >= Math.ceil(recientes.length / 2)
-      ? "\nLas últimas comidas registradas han sido pesadas o poco saludables — prioriza hoy una opción más liviana, con más vegetales o leguminosas, para compensar."
+      ? "\nLas últimas comidas han sido bastante contundentes — para balancear, considera hoy una opción más ligera dentro de la cocina típica de la región (una sopa, un caldo, un sancocho o un plato con más leguminosas)."
       : "";
 
   const dietaTexto = DIETA_INSTRUCCIONES[contexto.dieta] || "";
@@ -290,6 +301,28 @@ app.post("/api/receta-completa", async (req, res) => {
     return res.status(500).json({
       error: "Ocurrió un error inesperado. Por favor intenta más tarde.",
     });
+  }
+});
+
+// ── IMÁGENES (Pexels) ────────────────────────────────────────────────────────
+app.post("/api/buscar-imagen", async (req, res) => {
+  const { nombre } = req.body;
+  if (!nombre) return res.json({ url: null });
+  if (!process.env.PEXELS_API_KEY) return res.json({ url: null });
+
+  try {
+    const query = encodeURIComponent(`${nombre} comida colombiana`);
+    const response = await fetch(
+      `https://api.pexels.com/v1/search?query=${query}&per_page=3&orientation=landscape&size=medium`,
+      { headers: { Authorization: process.env.PEXELS_API_KEY } }
+    );
+    if (!response.ok) return res.json({ url: null });
+    const data = await response.json();
+    const url = data.photos?.[0]?.src?.medium || null;
+    return res.json({ url });
+  } catch (err) {
+    console.error("Error buscando imagen en Pexels:", err.message);
+    return res.json({ url: null });
   }
 });
 
