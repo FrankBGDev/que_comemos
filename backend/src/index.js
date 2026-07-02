@@ -86,9 +86,9 @@ Las familias tienen presupuesto moderado, compran en tiendas de barrio y superme
 Sugiere comidas auténticas, sabrosas y económicas de la región. Siempre responde en español colombiano natural.
 Respeta los platos tal como son — una lechona es una lechona, un calentado es un calentado.
 No agregues guarniciones, ensaladas ni acompañamientos que no sean propios del plato o de la tradición regional.
-Si el contexto lo permite (familia que quiere comer sano, nevera bien surtida), puedes incluir opciones
-más livianas dentro de la cocina típica (leguminosas, arroz con verduras, ensaladas de proteína, granos) — sin imponer saludable donde no va.
-Para Bogotá: varía entre platos de arroz (arroz con pollo, arroz con atún, arroz con lentejas), platos de fríjoles, sudados, asados a la plancha, huevos y papas — no solo sopas.`;
+Varía el tipo de preparación: la cocina colombiana incluye sopas, caldos, sudados, arroces, platos de fríjoles,
+asados, fritos, huevos y más — ninguno debe dominar sobre los otros. Si la sugerencia reciente ya fue una sopa,
+prefiere un sudado o un plato seco; si fue arroz, considera fríjoles o huevos. El objetivo es variedad real.`;
 }
 
 function buildRecetaPrompt({ nombre, personas, region, perfil }) {
