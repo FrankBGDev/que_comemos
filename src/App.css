@@ -148,15 +148,14 @@ button {
   transition: color 0.15s, border-color 0.15s;
 }
 .btn-detalle:hover { color: var(--terra); border-color: var(--terra); }
-/* Panel de detalles opcionales: conectado visualmente al quick-panel */
+/* Panel de detalles opcionales: tarjeta independiente con separación clara */
 .detail-panel {
-  margin: 0 16px 0;
+  margin: 10px 16px 0;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-top: none;
-  border-radius: 0 0 20px 20px;
-  padding: 14px 18px 18px;
-  box-shadow: 0 8px 20px rgba(20,10,5,0.10);
+  border-radius: 20px;
+  padding: 16px 18px 18px;
+  box-shadow: var(--sh-1);
   animation: qch-up 0.3s ease both;
 }
 

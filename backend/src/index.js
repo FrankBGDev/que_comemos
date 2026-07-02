@@ -2,6 +2,14 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import { createClient } from "@supabase/supabase-js";
+
+// ── SUPABASE ADMIN ────────────────────────────────────────────────────────────
+// Service role key — bypasea RLS, solo para backend. Nunca en el frontend.
+const supabase =
+  process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY
+    ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
+    : null;
 
 
 const app = express();
@@ -79,7 +87,8 @@ Sugiere comidas auténticas, sabrosas y económicas de la región. Siempre respo
 Respeta los platos tal como son — una lechona es una lechona, un calentado es un calentado.
 No agregues guarniciones, ensaladas ni acompañamientos que no sean propios del plato o de la tradición regional.
 Si el contexto lo permite (familia que quiere comer sano, nevera bien surtida), puedes incluir opciones
-más livianas dentro de la cocina típica (sopas, caldos, sancochos, leguminosas) — sin imponer saludable donde no va.`;
+más livianas dentro de la cocina típica (leguminosas, arroz con verduras, ensaladas de proteína, granos) — sin imponer saludable donde no va.
+Para Bogotá: varía entre platos de arroz (arroz con pollo, arroz con atún, arroz con lentejas), platos de fríjoles, sudados, asados a la plancha, huevos y papas — no solo sopas.`;
 }
 
 function buildRecetaPrompt({ nombre, personas, region, perfil }) {
@@ -199,7 +208,7 @@ function buildPrompt({ tiempo, contexto, historial = [], dia = "", perfil = null
   const noSaludables = recientes.filter((h) => h.saludable === false).length;
   const balanceTexto =
     recientes.length >= 3 && noSaludables >= Math.ceil(recientes.length / 2)
-      ? "\nLas últimas comidas han sido bastante contundentes — para balancear, considera hoy una opción más ligera dentro de la cocina típica de la región (una sopa, un caldo, un sancocho o un plato con más leguminosas)."
+      ? "\nLas últimas comidas han sido bastante contundentes — para balancear, considera hoy una opción más ligera: un arroz con verduras, un plato de fríjoles o lentejas, un sudado o una pechuga a la plancha."
       : "";
 
   const dietaTexto = DIETA_INSTRUCCIONES[contexto.dieta] || "";
@@ -228,6 +237,112 @@ Responde ÚNICAMENTE con un JSON válido (sin texto extra, sin markdown) con est
 }`;
 }
 
+// ── DB HELPERS ────────────────────────────────────────────────────────────────
+
+// Devuelve un plato aleatorio de la DB que coincida con region/tiempo/dieta,
+// excluyendo nombres recientes. Devuelve null si no hay DB o no hay coincidencia.
+async function buscarPlatoEnDB({ region, tiempo, dieta, historial = [], perfil = null }) {
+  if (!supabase) return null;
+
+  const nombresRecientes = historial.map((h) => h.nombre).filter(Boolean);
+  const noQuierenTerms = perfil?.noQuieren
+    ?.split(",").map((t) => t.trim().toLowerCase()).filter((t) => t.length >= 3) || [];
+  const alergiaTerms = perfil?.alergias
+    ?.split(",").map((t) => t.trim().toLowerCase()).filter((t) => t.length >= 3) || [];
+  const excluidos = new Set([...nombresRecientes.map((n) => n.toLowerCase())]);
+
+  let query = supabase
+    .from("platos")
+    .select("nombre, descripcion, ingredientes, tip, saludable, economico, rapido, dieta, imagen_url")
+    .eq("region", region)
+    .eq("tiempo", tiempo)
+    .eq("activo", true);
+
+  // Filtro de dieta
+  const DIETA_DB_TAGS = {
+    "Vegetariano": "vegetariano",
+    "Vegano": "vegano",
+    "Sin gluten": "sinGluten",
+    "Sin lácteos": "sinLacteos",
+  };
+  const dietaTag = DIETA_DB_TAGS[dieta];
+  if (dietaTag) {
+    query = query.contains("dieta", [dietaTag]);
+  }
+
+  const { data, error } = await query;
+  if (error || !data?.length) return null;
+
+  // Filtrar exclusiones en JS (más flexible que SQL para texto parcial)
+  const candidatos = data.filter((p) => {
+    const nombre = p.nombre.toLowerCase();
+    if (excluidos.has(nombre)) return false;
+    const textoPlato = `${p.nombre} ${(p.ingredientes || []).join(" ")}`.toLowerCase();
+    if (noQuierenTerms.some((t) => textoPlato.includes(t))) return false;
+    if (alergiaTerms.some((t) => textoPlato.includes(t))) return false;
+    return true;
+  });
+
+  if (!candidatos.length) return null;
+
+  const plato = candidatos[Math.floor(Math.random() * candidatos.length)];
+  return {
+    nombre: plato.nombre,
+    descripcion: plato.descripcion,
+    ingredientes: plato.ingredientes,
+    tip: plato.tip,
+    saludable: plato.saludable,
+    economico: plato.economico,
+    rapido: plato.rapido,
+    ...(plato.imagen_url ? { imagen: plato.imagen_url } : {}),
+    _fromDB: true,
+  };
+}
+
+// Guarda una sugerencia de Gemini en la tabla platos (silencioso si falla).
+async function guardarPlatoEnDB(plato, { region, tiempo }) {
+  if (!supabase || !plato?.nombre) return;
+  const { nombre, descripcion, ingredientes, tip, saludable, economico, rapido } = plato;
+  await supabase.from("platos").upsert(
+    { nombre, region, tiempo, descripcion, ingredientes: ingredientes || [], tip: tip || "",
+      saludable: !!saludable, economico: !!economico, rapido: !!rapido },
+    { onConflict: "nombre,region,tiempo", ignoreDuplicates: false }
+  ).select();
+}
+
+// Devuelve los pasos de receta ya guardados en DB para un plato, o null si no existen.
+async function buscarRecetaEnDB(nombre, region) {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("platos")
+    .select("tiempo_preparacion_min, porciones, dificultad, ingredientes, pasos, valor_nutricional")
+    .eq("nombre", nombre)
+    .eq("region", region)
+    .not("pasos", "is", null)
+    .maybeSingle();
+  if (error || !data?.pasos) return null;
+  return {
+    tiempo_total: data.tiempo_preparacion_min,
+    porciones: data.porciones,
+    dificultad: data.dificultad,
+    ingredientes: data.ingredientes,
+    pasos: data.pasos,
+    valor_nutricional: data.valor_nutricional,
+  };
+}
+
+// Guarda la receta devuelta por Gemini en la fila existente del plato (silencioso si falla).
+async function guardarRecetaEnDB(receta, nombre, region) {
+  if (!supabase || !nombre || !receta?.pasos) return;
+  await supabase.from("platos").update({
+    tiempo_preparacion_min: receta.tiempo_total,
+    porciones: receta.porciones,
+    dificultad: receta.dificultad,
+    pasos: receta.pasos,
+    valor_nutricional: receta.valor_nutricional,
+  }).eq("nombre", nombre).eq("region", region);
+}
+
 // ── ENDPOINT ─────────────────────────────────────────────────────────────────
 app.post("/api/sugerir-comida", async (req, res) => {
   const { tiempo, contexto, historial, dia, perfil } = req.body;
@@ -245,6 +360,24 @@ app.post("/api/sugerir-comida", async (req, res) => {
     });
   }
 
+  // 1. Intentar respuesta instantánea desde la DB
+  try {
+    const platoDB = await buscarPlatoEnDB({
+      region: contexto.region || "Bogotá",
+      tiempo,
+      dieta: contexto.dieta,
+      historial,
+      perfil,
+    });
+    if (platoDB) {
+      const { _fromDB, ...comida } = platoDB;
+      return res.json(comida);
+    }
+  } catch (dbErr) {
+    console.error("Error consultando DB (continuando con Gemini):", dbErr.message);
+  }
+
+  // 2. Fallback a Gemini
   if (!process.env.GEMINI_API_KEY) {
     console.error("GEMINI_API_KEY no está configurada.");
     return res.status(500).json({
@@ -254,6 +387,8 @@ app.post("/api/sugerir-comida", async (req, res) => {
 
   try {
     const comida = await callGemini(buildPrompt({ tiempo, contexto, historial, dia, perfil }), 1000);
+    // Guardar en DB en background para la próxima vez
+    guardarPlatoEnDB(comida, { region: contexto.region || "Bogotá", tiempo }).catch(() => {});
     return res.json(comida);
   } catch (err) {
     console.error("Error al procesar la sugerencia:", err.message);
@@ -279,6 +414,15 @@ app.post("/api/receta-completa", async (req, res) => {
     });
   }
 
+  // 1. Intentar receta pre-guardada en DB
+  try {
+    const recetaDB = await buscarRecetaEnDB(nombre, region || "Bogotá");
+    if (recetaDB) return res.json(recetaDB);
+  } catch (dbErr) {
+    console.error("Error consultando receta en DB (continuando con Gemini):", dbErr.message);
+  }
+
+  // 2. Fallback a Gemini
   if (!process.env.GEMINI_API_KEY) {
     console.error("GEMINI_API_KEY no está configurada.");
     return res.status(500).json({
@@ -288,6 +432,8 @@ app.post("/api/receta-completa", async (req, res) => {
 
   try {
     const receta = await callGemini(buildRecetaPrompt({ nombre, personas, region, perfil }), 2000);
+    // Guardar en DB en background
+    guardarRecetaEnDB(receta, nombre, region || "Bogotá").catch(() => {});
     return res.json(receta);
   } catch (err) {
     console.error("Error al procesar la receta:", err.message);
